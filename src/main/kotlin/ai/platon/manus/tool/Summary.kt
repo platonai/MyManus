@@ -17,7 +17,7 @@ class Summary(
 ) : AbstractTool() {
 
     override fun run(args: Map<String, Any?>): ToolExecuteResult {
-        logger.info("Summary: $args")
+        logger.info("Summary | $args")
         agent.state = AgentState.FINISHED
         return ToolExecuteResult(pulsarObjectMapper().writeValueAsString(args))
     }

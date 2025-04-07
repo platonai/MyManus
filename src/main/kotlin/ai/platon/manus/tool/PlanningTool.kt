@@ -4,11 +4,8 @@ import ai.platon.manus.agent.plan.StepStatus
 import ai.platon.manus.common.AnyNumberConvertor
 import ai.platon.manus.tool.support.ToolExecuteResult
 import org.slf4j.LoggerFactory
-import org.springframework.ai.openai.api.OpenAiApi
 import org.springframework.ai.tool.function.FunctionToolCallback
 import org.springframework.ai.tool.metadata.ToolMetadata
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.OffsetDateTime
 
 class PlanningTool : AbstractTool() {
@@ -22,13 +19,13 @@ class PlanningTool : AbstractTool() {
 
     override fun run(args: Map<String, Any?>): ToolExecuteResult {
         return try {
-            run0(args)
+            performPlanningTask(args)
         } catch (e: Exception) {
             ToolExecuteResult(e.message ?: "Failed to do with a plan", true)
         }
     }
 
-    private fun run0(args: Map<String, Any?>): ToolExecuteResult {
+    private fun performPlanningTask(args: Map<String, Any?>): ToolExecuteResult {
         logger.info("PlanningTool arguments: $args")
 
         val command = args["command"] as? String ?: throw IllegalArgumentException("Command is required")
@@ -93,7 +90,7 @@ class PlanningTool : AbstractTool() {
 
         return ToolExecuteResult(
             """
-                Plan created successfully with ID: $planId
+                Plan created successfully | $planId
                 
                 ${formatPlan(plan)}
                 """.trimIndent()

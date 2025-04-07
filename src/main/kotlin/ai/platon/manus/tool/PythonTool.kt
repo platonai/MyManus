@@ -9,7 +9,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback
 class PythonTool : AbstractTool() {
 
     override fun run(args: Map<String, Any?>): ToolExecuteResult {
-        val code = (args["code"] as String?) ?: return ToolExecuteResult("No code found | $args")
+        val code = (args["code"] as String?) ?: return ToolExecuteResult("No code provided | $args")
 
         val output = CodeExecutor.execute(code, "python", AppPaths.random("my.", ".py"))
 

@@ -56,14 +56,8 @@ It supports popular libraries such as `math`, `numpy`, `numexpr`, and others.
 
     override var data: Map<String, Any?>
         get() {
-            val data: MutableMap<String, Any?> = HashMap()
-            val parentData = super.data
-            data.putAll(parentData)
-
-            data["working_directory"] = workingDirectory
-            data["last_result"] = (if (lastResult != null) lastResult else "No previous execution")!!
-
-            return data
+            val lr = lastResult ?: "No previous execution"
+            return super.data + mapOf("last_result" to lr, "working_directory" to workingDirectory)
         }
         set(data) {
             super.data = data

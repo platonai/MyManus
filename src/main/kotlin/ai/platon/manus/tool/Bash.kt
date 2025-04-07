@@ -15,10 +15,10 @@ class Bash(
 
     constructor(workingDirectory: String): this(Paths.get(workingDirectory))
 
-    override fun run(toolInput: Map<String, Any?>): ToolExecuteResult {
-        logger.info("Bash: $toolInput")
+    override fun run(args: Map<String, Any?>): ToolExecuteResult {
+        logger.info("Bash: $args")
 
-        val command = toolInput["command"]?.toString()
+        val command = args["command"]?.toString()
             ?: return ToolExecuteResult("""{"output":"", "exitCode":-1}""")
 
         val commandList = mutableListOf(command)

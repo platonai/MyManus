@@ -24,6 +24,7 @@ A file system agent capable of performing read/write operations across multiple 
 
 - Supports: Reading | Writing | Format Conversion
 - Compatible Formats: Text (TXT, CSV), Documents (PDF, DOCX), Data (JSON, XML), Binary Files, etc.
+
         """.trimIndent()
 
     override val nextStepMessage: Message
@@ -44,22 +45,14 @@ A file system agent capable of performing read/write operations across multiple 
 
     override var data: Map<String, Any?>
         get() {
-            val data: MutableMap<String, Any?> = mutableMapOf()
-            val parentData: Map<String, Any?> = super.data
-            data.putAll(parentData)
-
-            data["working_directory"] = workingDirectory
+            val moreData = super.data.toMutableMap()
 
             val state = currentFileState.get()
-            if (state != null) {
-                data["last_operation"] = state["operation"]
-                data["operation_result"] = state["result"]
-            } else {
-                data["last_operation"] = "No previous operation"
-                data["operation_result"] = null
-            }
+            moreData["working_directory"] = workingDirectory
+            moreData["last_operation"] = state?.get("operation") ?: "No previous operation"
+            moreData["operation_result"] = state?.get("result")
 
-            return data
+            return moreData
         }
         set(data) {
             super.data = data
