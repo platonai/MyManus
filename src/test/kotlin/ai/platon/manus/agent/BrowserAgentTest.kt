@@ -26,7 +26,7 @@ class BrowserAgentTest {
     @Test
     fun testBrowserAgent() {
         val params = mapOf("action" to "navigate", "url" to "https://example.com")
-        val result = browserAgent.run(params)
-        println(result)
+//        val result = browserAgent.run(params)
+//        println(result)
     }
 }

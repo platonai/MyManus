@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContains
+import kotlin.test.assertTrue
 
 class PlanningToolTest {
 
@@ -92,8 +93,9 @@ class PlanningToolTest {
         val result = planningTool.getPlan(planId)
 
         assertNotNull(result)
-        assertTrue(result.message.contains("Plan: $title"))
-        assertTrue(result.message.contains("Steps:"))
+        assertTrue(result.message) { result.message.contains("""#💡MY PLAN: $title💡""") }
+        assertTrue(result.message) { result.message.contains("## Status Summary") }
+        assertTrue(result.message) { result.message.contains("## Steps Summary") }
     }
 
     @Test
@@ -127,8 +129,8 @@ class PlanningToolTest {
         assertNotNull(plan)
         requireNotNull(plan)
 
-        assertContains(plan["step_statuses"]?.toString()?:"", "in_progress")
-        assertContains(plan["step_notes"]?.toString()?:"", "Working on it")
+        assertContains(plan["step_statuses"]?.toString() ?: "", "in_progress")
+        assertContains(plan["step_notes"]?.toString() ?: "", "Working on it")
     }
 
     @Test

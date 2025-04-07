@@ -25,6 +25,12 @@ class BrowserAgent(
 
     override val description = AGENT_DESCRIPTION
 
+    override var data: Map<String, Any?>
+        get() = doGetData()
+        set(value) {
+            super.data = value
+        }
+
     override val nextStepMessage: Message
         get() = PromptTemplate(BROWSER_AGENT_NEXT_STEP_PROMPT).createMessage(data)
 
@@ -49,12 +55,6 @@ class BrowserAgent(
             conversationId
         )
     )
-
-    override var data: Map<String, Any?>
-        get() = doGetData()
-        set(value) {
-            super.data = value
-        }
 
     private fun doGetData(): Map<String, Any?> {
         val data: MutableMap<String, Any?> = super.data.toMutableMap()

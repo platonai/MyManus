@@ -50,7 +50,7 @@ abstract class MyAgent(
      * @return The information of each step.
      * */
     fun run(data: Map<String, Any>): String {
-        return run0(data)
+        return runStepByStep(data)
     }
 
     /**
@@ -63,28 +63,28 @@ abstract class MyAgent(
     }
 
     @Synchronized
-    private fun run0(data: Map<String, Any>): String {
+    private fun runStepByStep(data: Map<String, Any>): String {
         check(state == AgentState.IDLE) { "Cannot run agent from state: $state" }
 
-        currentStep = 0
         this.data = data
+        currentStep = 0
+        state = AgentState.RUNNING
 
-        val results: MutableList<String> = ArrayList()
+        val results = mutableListOf<String>()
 
         try {
-            state = AgentState.RUNNING
             while (currentStep < maxSteps && state != AgentState.FINISHED) {
                 currentStep++
-                logger.info("""🔥 Executing step $currentStep (max $maxSteps)""")
+                logger.info("""🔥 Executing step $currentStep (limit $maxSteps)""")
                 val stepResult = step()
-                if (isMissingToolCal()) {
-                    handleMissingToolCallState()
+                if (isHung()) {
+                    handleAgentHung()
                 }
                 results.add("Step $currentStep: $stepResult")
             }
 
             if (currentStep >= maxSteps) {
-                results.add("Terminated. Step: $currentStep (max $maxSteps)")
+                results.add("Terminated. Step: $currentStep (limit $maxSteps)")
             }
         } finally {
             state = AgentState.IDLE
@@ -93,7 +93,7 @@ abstract class MyAgent(
         return results.joinToString("\n")
     }
 
-    private fun handleMissingToolCallState() {
+    private fun handleAgentHung() {
         logger.warn("""💔 Agent hanging - no tool calls""")
         state = AgentState.FINISHED
 
@@ -109,7 +109,7 @@ one necessary tool call to proceed with the task.
         logger.warn(message.trimIndent().format(currentStep))
     }
 
-    private fun isMissingToolCal(): Boolean {
+    private fun isHung(): Boolean {
         // take the last 10 round messages
         val count = llmService.memory.get(conversationId, 10)
             .filterIsInstance<AssistantMessage>().count { it.toolCalls.isNullOrEmpty() }

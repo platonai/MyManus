@@ -155,6 +155,6 @@ class PlanningFlowMockkTest {
         every { agent1.run(any()) } throws RuntimeException("Execution failed")
 
         val result = planningFlow.executeStep(agent1, mapOf("text" to "Step 1"))
-        assertEquals("Error executing step 0: Execution failed", result)
+        assertEquals("""Failed to execute step #-1 🫨 | Execution failed""", result)
     }
 }

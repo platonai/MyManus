@@ -64,7 +64,7 @@ class PlanningFlow(
 
     override fun execute(inputText: String): String {
         return try {
-            execute0(inputText)
+            executeStepByStep(inputText)
         } catch (e: Exception) {
             val message = "Failed to execute the planning flow | " + e.message
             message.also { warnInterruptible(this, e, it) }
@@ -72,7 +72,7 @@ class PlanningFlow(
         }
     }
 
-    private fun execute0(inputText: String): String {
+    private fun executeStepByStep(inputText: String): String {
         if (inputText.isNotEmpty()) {
             createInitialPlan(inputText)
 
@@ -226,24 +226,29 @@ class PlanningFlow(
         }
     }
 
-    internal fun executeStep(executor: MyAgent, stepInfo: Map<String, String>): String {
+    internal fun executeStep(agent: MyAgent, stepInfo: Map<String, String>): String {
         try {
             val planStatus = currentPlanContent
-            val stepText = stepInfo.getOrDefault("text", "Step $currentStepIndex")
+            val stepText = stepInfo["text"] ?: "Step $currentStepIndex"
 
             try {
-                val stepResult = executor.run(
-                    mapOf(
-                        "planStatus" to planStatus, "currentStepIndex" to currentStepIndex, "stepText" to stepText
-                    )
+                val stepData = mapOf(
+                    "planStatus" to planStatus, "currentStepIndex" to currentStepIndex, "stepText" to stepText
                 )
+
+                val stepResult = agent.run(stepData)
 
                 markCurrentStepCompleted()
 
                 return stepResult
             } catch (e: Exception) {
-                logger.error("Error executing step " + currentStepIndex + ": " + e.message)
-                return "Error executing step " + currentStepIndex + ": " + e.message
+                val message = """Failed to execute step #$currentStepIndex 🫨"""
+                if (logger.isDebugEnabled) {
+                    logger.debug(message, e)
+                } else {
+                    logger.warn("$message | ${e.message}")
+                }
+                return "$message | ${e.message}"
             }
         } catch (e: Exception) {
             logger.error("Error preparing execution context: " + e.message)

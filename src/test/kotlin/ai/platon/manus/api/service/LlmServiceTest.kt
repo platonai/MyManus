@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @SpringBootTest
-@EnabledIfEnvironmentVariable(named = "llm.apiKey", matches = ".+")
+@EnabledIfEnvironmentVariable(named = "spring.ai.openai.api-key", matches = ".+")
 class LlmServiceTest {
     @Autowired
     lateinit var llmService: LlmService
