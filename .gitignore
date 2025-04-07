@@ -1,0 +1,5 @@
+/.idea/
+/target/
+/.vscode/
+
+/**/application-private.yml

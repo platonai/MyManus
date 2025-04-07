@@ -1,0 +1,5 @@
+manus:
+  browser:
+    headless: false
+  interactive:
+    enabled: true

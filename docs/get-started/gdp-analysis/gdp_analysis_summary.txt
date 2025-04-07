@@ -1,0 +1,5 @@
+Top 10 Chinese Cities GDP Analysis
+========================================
+1. GDP Leader: Shanghai
+2. Per Capita Leader: Hong Kong
+3. Average Per Capita GDP: $30,491

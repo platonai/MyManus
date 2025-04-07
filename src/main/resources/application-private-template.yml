@@ -1,0 +1,13 @@
+spring:
+  ai:
+    openai:
+      base-url: "https://api.deepseek.com"
+      api-key: "sk-YOU-API-KEY"
+      chat:
+        options:
+          model: deepseek-chat
+
+manus:
+  serp:
+    api:
+      key: "YOU-SERP-API-KEY"
