@@ -37,17 +37,22 @@ class PlanningFlowTest {
     @Test
     fun `Plan and execute - reporting top-n cities by GDP in China`() {
         val goal = """
-            请报告中国GDP排名前十的城市，需包含以下信息：
+Please report the **top 10 cities in China by GDP**, including the following details:  
 
-            - 名义GDP
-            - 人口数量
-            - 人均GDP
-            - 主要产业
+- **Nominal GDP**  
+- **Population**  
+- **GDP per capita**  
+- **Key industries**  
 
-            其他任务：
+**Additional tasks:**  
+- **Analyze and explain the results**  
+- **Generate a bar chart and save it as a PNG file**  
 
-            - 对结果进行分析说明
-            - 绘制柱状图并保存为png格式
+---  
+### **Key Notes:**  
+1. **Data Scope:** Focus on the latest available year (2023 or 2024).  
+2. **Analysis:** Highlight trends (e.g., growth drivers, regional disparities).  
+3. **Visualization:** Ensure the chart is labeled (city names, GDP values) and formatted clearly.  
 
         """.trimIndent()
         planningFlow.execute(goal)

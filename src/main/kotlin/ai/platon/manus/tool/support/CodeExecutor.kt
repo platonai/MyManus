@@ -53,11 +53,12 @@ object CodeExecutor {
     private fun executeCommand(executable: String, arguments: List<String>): ExecutionResult? {
         val process = ProcessLauncher.launch(executable, arguments)
         val output = waitFor(process)
-        return ExecutionResult(output, process.exitValue())
+        logger.info("Process output:\n{}", output.take(10).joinToString())
+        return ExecutionResult(output.joinToString(), process.exitValue())
     }
 
-    private fun waitFor(process: Process): String {
-        val processOutput = StringBuilder()
+    private fun waitFor(process: Process): List<String> {
+        val processOutput = mutableListOf<String>()
         val readLineThread = Thread {
             BufferedReader(InputStreamReader(process.inputStream)).use { reader ->
                 // Wait for DevTools listening line and extract port number.
@@ -65,10 +66,10 @@ object CodeExecutor {
 //                var line: String? = String(reader.readLine().toByteArray(Charset.defaultCharset()))
                 while (line != null) {
                     if (line.isNotBlank()) {
-                        logger.info("[output] - $line")
+                        // logger.info("[output] - $line")
                     }
 
-                    processOutput.appendLine(line)
+                    processOutput.add(line)
 
                     line = reader.readLine()
                 }
@@ -84,7 +85,7 @@ object CodeExecutor {
             close(readLineThread)
         }
 
-        return processOutput.toString()
+        return processOutput
     }
 
     private fun close(thread: Thread) {

@@ -22,7 +22,8 @@ class InteractiveCommandRunner(private val planningFlow: PlanningFlow) : Command
                 break
             }
 
-            planningFlow.setActivePlanId("plan_" + System.currentTimeMillis())
+            val planID = "plan_" + System.currentTimeMillis()
+            planningFlow.newPlan(planID)
             val result = planningFlow.execute(query)
 
             println("Plan : ${planningFlow.conversationId}")

@@ -49,17 +49,13 @@ class PlanningFlow(
             "plan_" + System.currentTimeMillis()
         }
 
-//        this.planningTool = when {
-//            !data.containsKey("planning_tool") -> PlanningTool.INSTANCE
-//            else -> data["planning_tool"] as PlanningTool
-//        }
         this.planningTool = data.computeIfAbsent("planning_tool") { PlanningTool.INSTANCE } as PlanningTool
     }
 
     constructor(llmService: LlmService, vararg agents: MyAgent): this(llmService, agents.toList())
 
-    fun setActivePlanId(activePlanId: String) {
-        this.conversationId = activePlanId
+    fun newPlan(planID: String) {
+        this.conversationId = planID
     }
 
     override fun execute(inputText: String): String {
@@ -168,7 +164,7 @@ class PlanningFlow(
 
     private fun currentStepInfo(): Pair<Int, Map<String, String>>? {
         if (!planningTool.plans.containsKey(conversationId)) {
-            logger.error("Plan with ID $conversationId not found")
+            logger.warn("Plan with ID $conversationId not found")
             return null
         }
 
@@ -382,7 +378,7 @@ class PlanningFlow(
 
             return planText.toString()
         } catch (e: Exception) {
-            logger.error("Error generating plan text from storage: " + e.message)
+            logger.warn("Error generating plan text from storage: " + e.message)
             return "Error: Unable to retrieve plan with ID $conversationId"
         }
     }
@@ -406,13 +402,16 @@ class PlanningFlow(
             val response = requestFinalizePlan(prompt)
 
             return """
-                Plan Summary:
+Plan Summary:
 
-                ${response!!.result.output.text}
+${response!!.result.output.text}
+
                 """.trimIndent()
         } catch (e: Exception) {
-            logger.error("Error finalizing plan with LLM: " + e.message)
-            return "Plan completed. Error generating summary."
+            logger.warn("Failed to finalize plan with LLM | {}", e.message)
+            return "Plan completed. Failed to generating summary."
+        } finally {
+            currentStepIndex = -1
         }
     }
 

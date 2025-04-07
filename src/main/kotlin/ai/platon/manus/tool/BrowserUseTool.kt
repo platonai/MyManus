@@ -283,7 +283,7 @@ class BrowserUseTool : AbstractTool() {
 
                 ACTION_GET_TEXT -> {
                     val body = page.textContent("body")
-                    logger.info("get_text body is {}", body)
+                    logger.debug("get_text body is {}", body)
                     return ToolExecuteResult(body)
                 }
 

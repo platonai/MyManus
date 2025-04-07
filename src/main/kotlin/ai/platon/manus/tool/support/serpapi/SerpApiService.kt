@@ -37,7 +37,8 @@ class SerpApiService(
                 .bodyToMono(String::class.java)
             val response = checkNotNull(responseMono.block()) { "Response from SERP should not be null" }
 
-            logger.info("SerpAPI search: {}\nResult:\n{}", request.query, response)
+            logger.info("SerpAPI search: {}", request.query)
+            logger.debug("Result:\n{}", response)
 
             return pulsarObjectMapper().readValue(response)
         } catch (e: Exception) {

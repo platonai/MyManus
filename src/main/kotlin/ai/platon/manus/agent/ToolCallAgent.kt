@@ -68,7 +68,7 @@ open class ToolCallAgent(
             val toolCalls = response0.result.output.toolCalls
 
             logger.info("""😇 {}'s thoughts: {}""", name, response0.result.output.text)
-            logger.info("🛠️ {} selected {} tools to use", name, toolCalls.size)
+            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
             val answer = response0.result.output.text
             if (answer != null && answer.isNotEmpty()) {
@@ -114,7 +114,8 @@ open class ToolCallAgent(
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
             llmService.memory.add(conversationId, responseMessage)
 
-            return String.format("""Failed to act 😔 | %s""", e.message).also { logger.warn(it) }
+            logger.warn("""Act failed 😔 | {}""", e.message)
+            return String.format("""Act failed 😔 | %s""", e.message)
         }
     }
 
