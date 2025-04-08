@@ -16,9 +16,9 @@ enum class StepStatus(
     override fun toString() = value
 
     companion object {
-        val allStatuses: List<String> = entries.map { it.value }.toList()
+        val allStatuses = entries.map { it.value }
 
-        val activeStatuses: List<String> = listOf(
+        val activeStatuses = listOf(
             NOT_STARTED.value, IN_PROGRESS.value
         )
 
