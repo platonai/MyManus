@@ -41,15 +41,15 @@ When you run the application, it will ask you to enter a task, here are some exa
 And a more complex task:
 
 ```markdown
-**Task: Report China's top 10 cities by GDP including:**
+Report China's top 10 cities by GDP including:
 
 - Nominal GDP
 - Population
 - GDP per capita
 - Major industries
 
-**Additional requirements:**
+Additional requirements
 - Provide analysis of the results
-- Create and save a bar chart in PNG format
+- Draw a bar chart and save it in PNG format
 
 ```

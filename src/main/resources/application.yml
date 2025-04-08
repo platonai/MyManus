@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: my-manus
+  banner:
+    location: banner.txt
   ai:
     mcp:
       client:

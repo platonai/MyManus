@@ -25,6 +25,7 @@ class PlanningFlow(
     private val logger = LoggerFactory.getLogger(PlanningFlow::class.java)
     private var planningTool: PlanningTool
     private var executorKeys: MutableList<String> = mutableListOf()
+    private val finishedPlans = mutableSetOf<String>()
 
     var conversationId: String
         private set
@@ -82,8 +83,12 @@ class PlanningFlow(
         while (true) {
             val info = currentStepInfo()
             if (info == null) {
-                logger.info("Plan not found | {}", conversationId)
-                result.append(finalizePlan())
+                if (planningTool.hasPlan(conversationId)) {
+                    logger.info("Plan not found | {}", conversationId)
+                    result.append(finalizeConversation(conversationId))
+                } else {
+                    logger.info("Plan is already finished | {}", conversationId)
+                }
                 break
             }
 
@@ -104,14 +109,16 @@ class PlanningFlow(
     internal fun askForAnInitialPlan(request: String): ChatResponse? {
         if (logger.isInfoEnabled) {
             val brief = request.replace("\\s+".toRegex(), " ")
-                .let { StringUtils.abbreviate(request, 0, 80) }
+                .replace("\\p{Cntrl}".toRegex(), " ")
+                .let { StringUtils.abbreviate(it, 0, 80) }
             logger.info("Asking a initial plan | #{} | {}", conversationId, brief)
         }
+
+        logger.info("Available agents: {}", agents.joinToString { it.name })
 
         val agentsInfo = agents.joinToString("\n", "Available agents:\n") {
             "- Agent name: ${it.name} description: ${it.description}"
         }
-
         val params = mapOf(
             "plan_id" to conversationId,
             "query" to request,
@@ -391,7 +398,7 @@ class PlanningFlow(
             .chatResponse()
     }
 
-    internal fun finalizePlan(): String {
+    internal fun finalizeConversation(planID: String): String {
         val planText = currentPlanContent
         try {
             val prompt = FINALIZE_PLAN_PROMPT.format(planText)
@@ -408,6 +415,7 @@ ${response?.result?.output?.text}
             logger.warn("Failed to finalize plan with LLM | {}", e.message)
             return "Plan completed. Failed to generating summary."
         } finally {
+            finishedPlans.add(planID)
             currentStepIndex = -1
         }
     }

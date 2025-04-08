@@ -9,10 +9,20 @@
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
+    <appender name="DRFA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>logs/manus.log</File>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%.10thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/manus.log.%d{.yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+    </appender>
 
     <!-- 根日志记录器 -->
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
+        <appender-ref ref="DRFA"/>
     </root>
 
     <!-- 特定包的日志级别调整 -->

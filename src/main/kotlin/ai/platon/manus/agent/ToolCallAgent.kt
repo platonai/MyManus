@@ -5,6 +5,7 @@ import ai.platon.manus.tool.FileSaver
 import ai.platon.manus.tool.GoogleSearch
 import ai.platon.manus.tool.PythonTool
 import ai.platon.manus.tool.Summary
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY
@@ -67,12 +68,12 @@ open class ToolCallAgent(
             val response0 = response ?: return false
             val toolCalls = response0.result.output.toolCalls
 
-            logger.info("""😇 {}'s thoughts: 🗯{}""", name, response0.result.output.text)
+            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, response0.result.output.text)
             logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
             val answer = response0.result.output.text
             if (answer != null && answer.isNotEmpty()) {
-                logger.info("""✨ {}'s response: 🗯{}""", name, answer)
+                logger.info("""✨ {}'s response: 🗯{}🗯""", name, answer)
             }
 
             if (toolCalls.isNotEmpty()) {
@@ -105,7 +106,7 @@ open class ToolCallAgent(
 
             results.add(llmCallResponse)
 
-            logger.info("🔧 Tool response | {} | {}", name, llmCallResponse)
+            logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(llmCallResponse, 1000))
 
             return results.joinToString("\n\n")
         } catch (e: Exception) {

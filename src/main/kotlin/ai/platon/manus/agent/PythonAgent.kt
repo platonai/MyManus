@@ -21,16 +21,10 @@ class PythonAgent(
 
     override val description: String
         get() = """
-**PYTHON AGENT**
-
-The Python Agent can directly execute Python code and return the results in a single step.  
-It supports popular libraries such as `math`, `numpy`, `numexpr`, and others.
-
-**Usage:**
-- One agent step allows you to write and execute Python code without separating the process.
-- **Input:** Describe the task you want the Python code to perform.
-- **Output:** The result produced by executing the code.
-
+Executes Python code string.
+Note: 
+- Only print outputs are visible, function return values are not captured. 
+- Use print statements to see results.
 				""".trimIndent()
 
     override val nextStepMessage: Message

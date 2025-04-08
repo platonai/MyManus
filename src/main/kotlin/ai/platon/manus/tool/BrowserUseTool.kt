@@ -199,6 +199,11 @@ class BrowserUseTool : AbstractTool() {
         if (!::page.isInitialized) {
             page = context.newPage()
         }
+
+        if (page.isClosed) {
+            logger.info("Page is closed, creating a new one")
+            page = context.newPage()
+        }
     }
 
     fun reset() {

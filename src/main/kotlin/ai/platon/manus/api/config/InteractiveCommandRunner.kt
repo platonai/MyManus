@@ -13,25 +13,24 @@ class InteractiveCommandRunner(
 ) : CommandLineRunner {
     @Throws(Exception::class)
     override fun run(vararg args: String) {
-        val scanner = Scanner(System.`in`)
         while (true) {
-            println("Tell me what you want to do (or type 'exit' to quit): ")
+            println("Tell me what you want to do (1. type '::end' to finalize your input 2. type 'exit' to quit): ")
             print(">>> ")
-            val query = scanner.nextLine()
+            val input = generateSequence(::readLine)
+                .takeWhile { it != "::end" }
+                .joinToString("\n")
 
-            if ("exit".equals(query, ignoreCase = true)) {
+            if ("exit".equals(input, ignoreCase = true)) {
                 println("Bye.")
                 break
             }
 
             val planID = "plan_" + System.currentTimeMillis()
             planningFlow.newPlan(planID)
-            val result = planningFlow.execute(query)
+            val result = planningFlow.execute(input)
 
-//            println("Plan : ${planningFlow.conversationId}")
-//            println("Result: \n$result")
+            println("Plan : ${planningFlow.conversationId}")
+            println("Result: \n$result")
         }
-
-        scanner.close()
     }
 }
