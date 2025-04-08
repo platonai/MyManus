@@ -3,9 +3,9 @@ package ai.platon.manus.api.config
 import ai.platon.manus.agent.*
 import ai.platon.manus.agent.plan.PlanningFlow
 import ai.platon.manus.api.service.LlmService
+import ai.platon.manus.common.MyContext
 import ai.platon.manus.tool.BrowserUseTool
 import ai.platon.manus.tool.GoogleSearch
-import ai.platon.manus.tool.support.CodeExecutor
 import jakarta.annotation.PreDestroy
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.impl.classic.HttpClients
@@ -27,10 +27,10 @@ class MyManusConfiguration {
     fun planningFlow(llmService: LlmService, toolCallingManager: ToolCallingManager): PlanningFlow {
         GoogleSearch.INSTANCE.serp.apikey = serpApiKey
 
-        val manusAgent = MyManusAgent(llmService, toolCallingManager, CodeExecutor.WORKING_DIR)
+        val manusAgent = MyManusAgent(llmService, toolCallingManager, MyContext.AGENT_WORKING_DIR)
         val browserAgent = BrowserAgent(llmService, toolCallingManager)
-        val fileAgent = FileAgent(llmService, toolCallingManager, CodeExecutor.WORKING_DIR)
-        val pythonAgent = PythonAgent(llmService, toolCallingManager, CodeExecutor.WORKING_DIR)
+        val fileAgent = FileAgent(llmService, toolCallingManager, MyContext.AGENT_WORKING_DIR)
+        val pythonAgent = PythonAgent(llmService, toolCallingManager, MyContext.AGENT_WORKING_DIR)
 
         return PlanningFlow(llmService, manusAgent, browserAgent, fileAgent, pythonAgent)
     }

@@ -4,7 +4,7 @@ import ai.platon.manus.MyTestApplication
 import ai.platon.manus.agent.BrowserAgent
 import ai.platon.manus.agent.PythonAgent
 import ai.platon.manus.api.service.LlmService
-import ai.platon.manus.tool.support.CodeExecutor
+import ai.platon.manus.common.MyContext
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,7 +30,7 @@ class PlanningFlowTestBase {
     @BeforeEach
     fun setUp() {
         val agent1 = BrowserAgent(llmService, toolCallingManager)
-        val agent2 = PythonAgent(llmService, toolCallingManager, CodeExecutor.WORKING_DIR)
+        val agent2 = PythonAgent(llmService, toolCallingManager, MyContext.AGENT_WORKING_DIR)
 
         planningFlow = PlanningFlow(llmService, agent1, agent2)
     }

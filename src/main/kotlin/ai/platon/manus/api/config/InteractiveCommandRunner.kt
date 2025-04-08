@@ -8,7 +8,9 @@ import java.util.*
 
 @Configuration
 @ConditionalOnProperty(prefix = "manus.interactive", name = ["enabled"], havingValue = "true", matchIfMissing = false)
-class InteractiveCommandRunner(private val planningFlow: PlanningFlow) : CommandLineRunner {
+class InteractiveCommandRunner(
+    private val planningFlow: PlanningFlow
+) : CommandLineRunner {
     @Throws(Exception::class)
     override fun run(vararg args: String) {
         val scanner = Scanner(System.`in`)

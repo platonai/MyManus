@@ -1,5 +1,6 @@
 package ai.platon.manus.tool.support
 
+import ai.platon.manus.common.MyContext
 import ai.platon.pulsar.common.ProcessLauncher
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
@@ -8,15 +9,12 @@ import org.slf4j.LoggerFactory
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
-import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
 object CodeExecutor {
     private val logger: Logger = LoggerFactory.getLogger(CodeExecutor::class.java)
-
-    val WORKING_DIR: String = Paths.get(System.getProperty("user.dir"), "target").toString()
 
     fun execute(
         code: String,
@@ -28,7 +26,7 @@ object CodeExecutor {
 
         var workDir = if (kwargs.containsKey("work_dir")) kwargs["work_dir"] as String? else null
         if (workDir == null) {
-            workDir = WORKING_DIR
+            workDir = MyContext.AGENT_WORKING_DIR
         }
 
         val destination = filename ?: "my.${RandomStringUtils.randomAlphanumeric(12)}.$lang"
