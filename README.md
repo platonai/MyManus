@@ -6,7 +6,7 @@ MyManus is your AI assistant—simply speak your task, and let it get the job do
 
 Top 10 Chinese Cities GDP Report:
 
-[![MyManus](docs/get-started/gdp-analysis/gdp_comparison.png)](docs/MyManus.mp4)
+[![MyManus](https://img.youtube.com/vi/G3EZpnW1tdM/0.jpg)](https://youtu.be/G3EZpnW1tdM)
 
 ## How to Run
 
