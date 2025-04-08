@@ -5,10 +5,6 @@ import ai.platon.manus.tool.SCROLL_PIXELS_BELOW
 import ai.platon.manus.tool.SCROLL_TOTAL_HEIGHT
 import ai.platon.manus.tool.SCROLL_VIEWPORT_HEIGHT
 
-// Agent name and description
-const val AGENT_NAME = "BROWSER_AGENT"
-const val AGENT_DESCRIPTION = "A browser agent that can control a browser to accomplish tasks"
-
 // Prompt template placeholders
 const val PLACEHOLDER_URL = "url_placeholder"
 const val PLACEHOLDER_TABS = "tabs_placeholder"

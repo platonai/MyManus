@@ -15,15 +15,21 @@ import java.util.concurrent.atomic.AtomicReference
 class BrowserAgent(
     llmService: LlmService, toolCallingManager: ToolCallingManager
 ) : ToolCallAgent(llmService, toolCallingManager) {
+    companion object {
+        // Agent name and description
+        const val BROWSER_AGENT_NAME = "BROWSER_AGENT"
+        const val BROWSER_AGENT_DESCRIPTION = "A browser agent that can control a browser to accomplish tasks"
+    }
+
     private val logger: Logger = LoggerFactory.getLogger(BrowserAgent::class.java)
     private val currentStepBrowserCache = AtomicReference<Map<String, Any?>>()
 
     private val browserState: Map<String, Any?>
         get() = getBrowserStateWithCache()
 
-    override val name = AGENT_NAME
+    override val name = BROWSER_AGENT_NAME
 
-    override val description = AGENT_DESCRIPTION
+    override val description = BROWSER_AGENT_DESCRIPTION
 
     override var data: Map<String, Any?>
         get() = doGetData()
