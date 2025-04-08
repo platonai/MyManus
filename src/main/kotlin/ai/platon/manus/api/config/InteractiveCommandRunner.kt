@@ -14,13 +14,13 @@ class InteractiveCommandRunner(
     @Throws(Exception::class)
     override fun run(vararg args: String) {
         while (true) {
-            println("Tell me what you want to do (1. type '::end' to finalize your input 2. type 'exit' to quit): ")
+            println("Tell me what you want to do (1. type ':end' to finalize your input 2. type 'exit' to quit): ")
             print(">>> ")
             val input = generateSequence(::readLine)
-                .takeWhile { it != "::end" }
+                .takeWhile { it != ":end" && it != ":exit" && it != "exit" }
                 .joinToString("\n")
 
-            if ("exit".equals(input, ignoreCase = true)) {
+            if (input.lowercase() in listOf("exit", ":exit")) {
                 println("Bye.")
                 break
             }

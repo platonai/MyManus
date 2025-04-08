@@ -52,4 +52,6 @@ Additional requirements
 - Provide analysis of the results
 - Draw a bar chart and save it in PNG format
 
+:end
+
 ```
