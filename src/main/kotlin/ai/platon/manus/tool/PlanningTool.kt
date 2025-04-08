@@ -93,6 +93,7 @@ class PlanningTool : AbstractTool() {
                 Plan created successfully | $planId
                 
                 ${formatPlan(plan)}
+                
                 """.trimIndent()
         )
     }
@@ -159,18 +160,18 @@ class PlanningTool : AbstractTool() {
     fun getPlan(planId: String?): ToolExecuteResult {
         var planId1 = planId
         if (planId1.isNullOrEmpty()) {
-            require(currentPlanId != null) { "No active plan. Provide a plan_id or set an active plan" }
+            requireNotNull(currentPlanId) { "No active plan. Provide a plan_id or set an active plan" }
             planId1 = currentPlanId
         }
 
-        val plan: Map<String, Any> = plans[planId1] ?: throw IllegalArgumentException("No plan found with ID: $planId1")
+        val plan: Map<String, Any> = requireNotNull(plans[planId1]) { "No plan found with ID: $planId1" }
         return ToolExecuteResult(formatPlan(plan))
     }
 
     fun setActivePlan(planId: String): ToolExecuteResult {
         require(planId.isNotBlank()) { "Parameter `plan_id` is required | set_active" }
 
-        val plan = plans[planId] ?: throw IllegalArgumentException("No plan found | $planId")
+        val plan = requireNotNull(plans[planId]) { "No plan found | $planId" }
         currentPlanId = planId
 
         return ToolExecuteResult(

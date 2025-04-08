@@ -8,14 +8,12 @@ enum class StepStatus(
     val mark: String,
     val emoji: String
 ) {
-    NOT_STARTED("not_started", "[ ]", "\uD83D\uDD1C"),
-    IN_PROGRESS("in_progress", "[→]", "\uD83D\uDE80"),
+    NOT_STARTED("not_started", "[ ]", """🔜"""),
+    IN_PROGRESS("in_progress", "[→]", """🚀"""),
     COMPLETED("completed", "[✓]", "✅"),
     BLOCKED("blocked", "[!]", "❗");
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString() = value
 
     companion object {
         val allStatuses: List<String> = entries.map { it.value }.toList()

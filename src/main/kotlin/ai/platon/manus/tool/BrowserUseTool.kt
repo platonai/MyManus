@@ -379,13 +379,24 @@ class BrowserUseTool : AbstractTool() {
 
             return state
         } catch (e: Exception) {
-            logger.error("Failed to get browser state", e)
+            logger.warn("Failed to get browser state", e)
             state[STATE_ERROR] = "Failed to get browser state: ${e.message}"
             return state
         }
     }
 
+    private fun isInitialized(): Boolean {
+        return ::context.isInitialized && ::browser.isInitialized && ::page.isInitialized
+    }
+
     private fun computeCurrentStateTo(state: MutableMap<String, Any?>) {
+        if (!isInitialized()) {
+            return
+        }
+        if (page.isClosed || !browser.isConnected) {
+            return
+        }
+
         // Basic information
         val currentUrl = page.url()
         val title = page.title()

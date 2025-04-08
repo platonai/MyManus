@@ -67,12 +67,12 @@ open class ToolCallAgent(
             val response0 = response ?: return false
             val toolCalls = response0.result.output.toolCalls
 
-            logger.info("""😇 {}'s thoughts: {}""", name, response0.result.output.text)
+            logger.info("""😇 {}'s thoughts: 🗯{}""", name, response0.result.output.text)
             logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
             val answer = response0.result.output.text
             if (answer != null && answer.isNotEmpty()) {
-                logger.info("✨ {}'s response: {}", name, answer)
+                logger.info("""✨ {}'s response: 🗯{}""", name, answer)
             }
 
             if (toolCalls.isNotEmpty()) {
@@ -82,7 +82,7 @@ open class ToolCallAgent(
             return toolCalls.isNotEmpty()
         } catch (e: Exception) {
             e.printStackTrace()
-            logger.error("I'm stuck in my thought process 😭 | {} | {}\n{}", name, e.message, data)
+            logger.warn("I'm stuck in my thought process 😭 | {} | {}\n{}", name, e.message, data)
             if (retry < REPLY_MAX) {
                 return doThinkWithRetry(retry + 1)
             }

@@ -81,7 +81,7 @@ object CodeExecutor {
             readLineThread.join(2 * 1000 * 60)
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()
-            logger.error("Interrupted while waiting for devtools server, close it", e)
+            logger.warn("Interrupted while waiting for devtools server, close it", e)
             close(readLineThread)
         }
 

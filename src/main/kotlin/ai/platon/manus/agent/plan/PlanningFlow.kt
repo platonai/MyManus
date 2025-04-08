@@ -82,6 +82,7 @@ class PlanningFlow(
         while (true) {
             val info = currentStepInfo()
             if (info == null) {
+                logger.info("Plan not found | {}", conversationId)
                 result.append(finalizePlan())
                 break
             }
@@ -163,13 +164,9 @@ class PlanningFlow(
     }
 
     private fun currentStepInfo(): Pair<Int, Map<String, String>>? {
-        if (!planningTool.plans.containsKey(conversationId)) {
-            logger.warn("Plan with ID $conversationId not found")
-            return null
-        }
+        val planData = planningTool.plans[conversationId] ?: return null
 
         try {
-            val planData = planningTool.plans[conversationId]!!
             val steps = planData.getOrDefault("steps", ArrayList<String>()) as List<String>
             val stepStatuses = planData.getOrDefault("step_statuses", ArrayList<String>()) as MutableList<String>
 
@@ -199,7 +196,7 @@ class PlanningFlow(
                         )
                         planningTool.run(args)
                     } catch (e: Exception) {
-                        logger.error("Error marking step as in_progress", e)
+                        logger.warn("Error marking step as in_progress", e)
                         if (i < stepStatuses.size) {
                             stepStatuses[i] = StepStatus.IN_PROGRESS.value
                         } else {
@@ -217,7 +214,7 @@ class PlanningFlow(
 
             return null
         } catch (e: Exception) {
-            logger.error("Error finding current step index: " + e.message)
+            logger.warn("Error finding current step index: " + e.message)
             return null
         }
     }
@@ -247,7 +244,7 @@ class PlanningFlow(
                 return "$message | ${e.message}"
             }
         } catch (e: Exception) {
-            logger.error("Error preparing execution context: " + e.message)
+            logger.warn("Error preparing execution context: " + e.message)
             return "Error preparing execution context: " + e.message
         }
     }
@@ -270,7 +267,7 @@ class PlanningFlow(
 
             return result
         } catch (e: Exception) {
-            logger.error("Failed to update plan status: " + e.message)
+            logger.warn("Failed to update plan status: " + e.message)
 
             val plans = planningTool.plans
             val planData = plans[conversationId] ?: return null
@@ -397,16 +394,16 @@ class PlanningFlow(
     internal fun finalizePlan(): String {
         val planText = currentPlanContent
         try {
-            val prompt = FINALIZE_PLAN_PROMPT.trimIndent().format(planText)
+            val prompt = FINALIZE_PLAN_PROMPT.format(planText)
 
             val response = requestFinalizePlan(prompt)
 
             return """
-Plan Summary:
+## Plan Summary:
 
-${response!!.result.output.text}
+${response?.result?.output?.text}
 
-                """.trimIndent()
+"""
         } catch (e: Exception) {
             logger.warn("Failed to finalize plan with LLM | {}", e.message)
             return "Plan completed. Failed to generating summary."

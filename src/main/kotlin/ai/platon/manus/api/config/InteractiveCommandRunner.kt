@@ -26,8 +26,8 @@ class InteractiveCommandRunner(private val planningFlow: PlanningFlow) : Command
             planningFlow.newPlan(planID)
             val result = planningFlow.execute(query)
 
-            println("Plan : ${planningFlow.conversationId}")
-            println("Result: \n$result")
+//            println("Plan : ${planningFlow.conversationId}")
+//            println("Result: \n$result")
         }
 
         scanner.close()
