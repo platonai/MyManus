@@ -11,7 +11,7 @@
     <name>My Manus</name>
 
     <build>
-        <defaultGoal>install</defaultGoal>
+        <defaultGoal>package</defaultGoal>
 
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
@@ -119,9 +119,34 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <!-- see docs/development/native-image.md -->
+                    <!--
+                    TODO: failed to build image, can not connect to registry-1.docker.io without proxy, and can not connect to local proxy, need a solution
+                    -->
+<!--                    <image>-->
+<!--                        <name>platonai/my-manus</name>-->
+<!--                        &lt;!&ndash; Sadly, there are still problems to run  &ndash;&gt;-->
+<!--                        <builder>paketobuildpacks/builder:tiny</builder>-->
+<!--                        <env>-->
+<!--                            <BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE> &lt;!&ndash; Enable native image build &ndash;&gt;-->
+<!--                        </env>-->
+<!--                    </image>-->
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <!-- Native Profile -->
+    <profiles>
+        <profile>
+            <id>native</id>
+            <properties>
+                <spring-boot.build-image.pullPolicy>IF_NOT_PRESENT</spring-boot.build-image.pullPolicy>
+            </properties>
+        </profile>
+
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -281,6 +306,7 @@
 
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <spring-javaformat-maven-plugin.version>0.0.39</spring-javaformat-maven-plugin.version>
+        <native.maven.plugin.version>0.10.6</native.maven.plugin.version>
     </properties>
 
 </project>
