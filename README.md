@@ -1,6 +1,8 @@
 # 🤖 MyManus
 
-MyManus is your AI assistant—simply speak your task, and let it get the job done.
+1. Developed by programmers to solve specific problems in their daily work
+2. Gradually automate and enhance the daily tasks of programmers
+3. Continuously self-evolve
 
 ## 📹 Video
 
