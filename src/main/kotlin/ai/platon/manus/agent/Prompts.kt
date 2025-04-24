@@ -38,11 +38,15 @@ Once you have FULLY completed the current step:
 
 """
 
-val TOOL_CALL_AGENT_NEXT_STEP_PROMPT = """
+const val TOOL_CALL_AGENT_NEXT_STEP_PROMPT = """
 What is the next step you would like to take?
 Please provide the step number or the name of the next step.
 
 """
+
+/*************************************************************************
+ * BROWSER AGENT
+ * ***********************************************************************/
 
 // System prompt for the browser agent, it should keep the same with browser-agent-system-prompt.md
 const val BROWSER_AGENT_SYSTEM_PROMPT = """
@@ -152,22 +156,9 @@ Be methodical - remember your progress and what you've learned so far.
 
 """
 
-
-
-
-
-const val PYTHON_AGENT_NEXT_STEP_PROMPT = """
-What should I do next to achieve my goal?
-
-Current Execution State:
-- Working Directory: {working_directory}
-- Last Execution Result: {last_result}
-
-Remember:
-1. Use PythonExecutor for direct Python code execution
-2. IMPORTANT: You MUST use at least one tool in your response to make progress!
-
-"""
+/*************************************************************************
+ * PYTHON AGENT
+ * ***********************************************************************/
 
 const val PYTHON_AGENT_SYSTEM_PROMPT = """
 You are an AI agent specialized in Python programming and execution. Your goal is to accomplish Python-related tasks effectively and safely.
@@ -199,7 +190,22 @@ You are an AI agent specialized in Python programming and execution. Your goal i
 
 """
 
+const val PYTHON_AGENT_NEXT_STEP_PROMPT = """
+What should I do next to achieve my goal?
 
+Current Execution State:
+- Working Directory: {working_directory}
+- Last Execution Result: {last_result}
+
+Remember:
+1. Use PythonExecutor for direct Python code execution
+2. IMPORTANT: You MUST use at least one tool in your response to make progress!
+
+"""
+
+/*************************************************************************
+ * FILE AGENT
+ * ***********************************************************************/
 
 val FILE_AGENT_SYSTEM_PROMPT = """
 You are an AI agent specialized in file operations. Your goal is to handle file-related tasks effectively and safely.
