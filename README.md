@@ -1,8 +1,9 @@
 # 🤖 MyManus
 
-1. Developed by programmers to solve specific problems in their daily work
-2. Gradually automate and enhance the daily tasks of programmers
-3. Continuously self-evolve
+1. Designed to address programmers' daily challenges
+2. A personal toolbox and assistant for developers
+3. Compact, practical, and enjoyable
+4. Open to innovative ideas
 
 ## 📹 Video
 
