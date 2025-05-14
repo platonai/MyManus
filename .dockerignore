@@ -24,4 +24,13 @@ docker-compose.yml
 # Documentation
 docs/
 README.md
-LICENSE 
+LICENSE
+
+/.idea/
+/target/
+/logs/
+/.vscode/
+
+/**/application-private.yml
+application-private.yml
+

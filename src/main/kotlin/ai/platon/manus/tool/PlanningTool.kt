@@ -107,7 +107,7 @@ class PlanningTool : AbstractTool() {
         }
 
         if (steps != null) {
-            val oldSteps = plan["steps"] as List<String>?
+            val oldSteps = plan["steps"] as List<String>
             val oldStatuses = plan["step_statuses"] as List<String>?
             val oldNotes = plan["step_notes"] as List<String>?
 
@@ -116,7 +116,7 @@ class PlanningTool : AbstractTool() {
 
             for (i in steps.indices) {
                 val step = steps[i]
-                if (i < oldSteps!!.size && step == oldSteps[i]) {
+                if (i < oldSteps.size && step == oldSteps[i]) {
                     newStatuses.add(oldStatuses!![i])
                     newNotes.add(oldNotes!![i])
                 } else {

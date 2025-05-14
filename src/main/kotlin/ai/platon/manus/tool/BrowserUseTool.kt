@@ -185,27 +185,6 @@ class BrowserUseTool : AbstractTool() {
         this.headless = headless
     }
 
-    fun initializeBrowserIfNecessary() {
-        if (!::browser.isInitialized) {
-            browser = playwright.chromium().launch(BrowserType.LaunchOptions().setHeadless(headless))
-        }
-        if (!::context.isInitialized) {
-            context = browser.newContext(
-                Browser.NewContextOptions()
-                    .setViewportSize(1920, 1080)
-                    .setJavaScriptEnabled(true)
-            )
-        }
-        if (!::page.isInitialized) {
-            page = context.newPage()
-        }
-
-        if (page.isClosed) {
-            logger.info("Page is closed, creating a new one")
-            page = context.newPage()
-        }
-    }
-
     fun reset() {
         close()
         closed.set(false)
@@ -372,6 +351,27 @@ class BrowserUseTool : AbstractTool() {
             } catch (e: Exception) {
                 warnForClose(this, e)
             }
+        }
+    }
+
+    fun initializeBrowserIfNecessary() {
+        if (!::browser.isInitialized) {
+            browser = playwright.chromium().launch(BrowserType.LaunchOptions().setHeadless(headless))
+        }
+        if (!::context.isInitialized) {
+            context = browser.newContext(
+                Browser.NewContextOptions()
+                    .setViewportSize(1920, 1080)
+                    .setJavaScriptEnabled(true)
+            )
+        }
+        if (!::page.isInitialized) {
+            page = context.newPage()
+        }
+
+        if (page.isClosed) {
+            logger.info("Page is closed, creating a new one")
+            page = context.newPage()
         }
     }
 
