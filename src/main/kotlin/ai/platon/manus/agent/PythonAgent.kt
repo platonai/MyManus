@@ -17,7 +17,7 @@ class PythonAgent(
     private var lastResult: String? = null
 
     override val name: String
-        get() = "PYTHON_AGENT"
+        get() = PythonTool.NAME
 
     override val description: String
         get() = """

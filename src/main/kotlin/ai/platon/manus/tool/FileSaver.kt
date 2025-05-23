@@ -46,9 +46,9 @@ class FileSaver : AbstractTool() {
 			
 			""".trimIndent()
 
-        private const val name = "file_saver"
+        const val NAME = "FILE_AGENT"
 
-        private val description = """
+        val DESCRIPTION = """
 ### Save Content to a Local File
 
 Use this tool to save text, code, or other generated content to a specified file on the local filesystem.
@@ -60,8 +60,8 @@ It accepts two parameters:
 			""".trimIndent()
 
         val functionToolCallback: FunctionToolCallback<*, *>
-            get() = FunctionToolCallback.builder(name, FileSaver())
-                .description(description)
+            get() = FunctionToolCallback.builder(NAME, FileSaver())
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .build()
