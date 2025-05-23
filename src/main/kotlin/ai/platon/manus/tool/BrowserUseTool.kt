@@ -208,7 +208,7 @@ class BrowserUseTool() : AbstractTool() {
         // Basic information
         val currentUrl = driver.currentUrl()
 
-        val hasJsUtils = driver.evaluateValue("__pulsar_utils__.add(1, 1)") == 2
+        val hasJsUtils = URLUtils.isStandard(currentUrl) && driver.evaluateValue("__pulsar_utils__.add(1, 1)") == 2
         val title = if (hasJsUtils) driver.selectFirstTextOrNull("title") else null
 
         state[STATE_URL] = currentUrl
