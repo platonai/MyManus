@@ -8,8 +8,8 @@
     <artifactId>agents</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
-    <name>Pulsar Agents</name>
-    <description>Pulsar Agents</description>
+    <name>MyManus</name>
+    <description>MyManus</description>
 
     <build>
         <defaultGoal>package</defaultGoal>
@@ -241,12 +241,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test-junit</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+
 
         <!-- Test Dependencies -->
         <dependency>
@@ -261,17 +256,7 @@
             <scope>test</scope>
         </dependency>
         <!-- mockito-kotlin -->
-        <dependency>
-            <groupId>org.mockito.kotlin</groupId>
-            <artifactId>mockito-kotlin</artifactId>
-            <version>5.4.0</version>
-        </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

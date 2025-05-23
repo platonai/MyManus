@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
-import org.springframework.beans.factory.annotation.Value
 import kotlin.test.assertTrue
 
 @EnabledIfEnvironmentVariable(named = "manus.serp.api.key", matches = ".+")

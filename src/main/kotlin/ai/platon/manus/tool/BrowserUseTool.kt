@@ -6,6 +6,7 @@ import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.manus.common.JS_GET_SCROLL_INFO
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.PulsarSettings
@@ -206,26 +207,33 @@ class BrowserUseTool() : AbstractTool() {
     private suspend fun computeCurrentStateTo(state: MutableMap<String, Any?>) {
         // Basic information
         val currentUrl = driver.currentUrl()
-        val title = driver.selectFirstTextOrNull("title") ?: ""
+
+        val hasJsUtils = driver.evaluateValue("__pulsar_utils__.add(1, 1)") == 2
+        val title = if (hasJsUtils) driver.selectFirstTextOrNull("title") else null
 
         state[STATE_URL] = currentUrl
         state[STATE_TITLE] = title
 
         // Tab information
-        val drivers = driver.browser.drivers.values
+        val drivers = driver.browser.drivers.values.sortedBy { it.id }
         val tabs: List<Map<String, Any?>> = drivers.mapIndexed { i, it ->
             mapOf(
                 STATE_URL to it.url(),
-                STATE_TITLE to driver.selectFirstTextOrNull("title"),
+                STATE_TITLE to if (hasJsUtils) driver.selectFirstTextOrNull("title") else null,
                 "id" to i
             )
         }
 
         state[STATE_TABS] = tabs
 
+        // Not a normal page, e.g. about:blank
+        if (!hasJsUtils) {
+            return
+        }
+
         try {
             // Viewport and scroll information
-            val scrollInfo = driver.evaluate(JS_GET_SCROLL_INFO) as Map<String, Any?>
+            val scrollInfo = driver.evaluateValue("($JS_GET_SCROLL_INFO)()") as Map<String, Any?>
             state[STATE_SCROLL_INFO] = scrollInfo
         } catch (e: Exception) {
             logger.warn("Failed to get scroll info via js | {}\n{}", currentUrl, JS_GET_SCROLL_INFO)
@@ -233,7 +241,7 @@ class BrowserUseTool() : AbstractTool() {
 
         try {
             // Interactive elements
-            val jsResult = driver.evaluateValueDetail(JS_GET_INTERACTIVE_ELEMENTS)
+            val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
             requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
             val elementsInfo = jsResult.value as List<Map<String, Any?>>
             state[STATE_INTERACTIVE_ELEMENTS] = elementsInfo

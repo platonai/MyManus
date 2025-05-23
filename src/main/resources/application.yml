@@ -1,11 +1,17 @@
 server:
-  port: 8185
+  port: 8225
 
 spring:
+  main:
+    allow-bean-definition-overriding: true
   application:
     name: my-manus
   banner:
     location: banner.txt
+  profiles:
+    active: private
+  config:
+    import: optional:classpath:application-private.yml,optional:classpath:application-private.properties
   ai:
     mcp:
       client:
