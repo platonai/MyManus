@@ -3,5 +3,7 @@
 /logs/
 /.vscode/
 
-/**/application-private.yml
-application-private.yml
+#/**/application-private.yml
+#application-private.yml
+#/**/application-private.properties
+#application-private.properties
