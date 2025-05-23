@@ -1,19 +1,14 @@
 package ai.platon.manus.examples
 
-import ai.platon.manus.agent.plan.PlanningFlow
-import jakarta.annotation.PostConstruct
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import ai.platon.manus.api.SimpleAgentTaskRunner
 import org.springframework.boot.runApplication
 
-@SpringBootApplication(scanBasePackages = ["ai.platon.manus.api"])
-class MinesweeperApplication(
-    private val planningFlow: PlanningFlow
-) {
-    private val query = """
+fun main() {
+    val task = """
 ### 📌 产品需求文档：Minesweeper 游戏（扫雷）
 
 **产品经理：** ivincent.zhang@gmail.com
-**开发负责人：** MyManus
+**开发负责人：** PulsarAgents
 **版本：** v1.0
 **发布日期：** TBD
 
@@ -53,18 +48,7 @@ class MinesweeperApplication(
 - 提供简单的 README 文档，说明如何运行程序。
 
 ---
-
     """
 
-    @PostConstruct
-    fun run() {
-        planningFlow.newPlan("plan_" + System.currentTimeMillis())
-        planningFlow.execute(query)
-    }
-}
-
-fun main() {
-    // val additionalProfiles = mutableListOf("private")
-    System.setProperty("spring.profiles.include", "private")
-    runApplication<MinesweeperApplication>()
+    runApplication<SimpleAgentTaskRunner>(task)
 }

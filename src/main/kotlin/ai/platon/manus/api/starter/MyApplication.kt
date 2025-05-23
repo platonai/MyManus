@@ -1,4 +1,4 @@
-package ai.platon.manus.api
+package ai.platon.manus.api.starter
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -8,7 +8,7 @@ import java.awt.GraphicsEnvironment
 class MyManusApplication
 
 fun main(args: Array<String>) {
-    val additionalProfiles = mutableListOf("private")
+    val additionalProfiles = mutableListOf<String>()
 
     // disable interactive mode if the environment is headless, such as docker container
     val isHeadless = GraphicsEnvironment.isHeadless()
