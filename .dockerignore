@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Logs
+logs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+docs/
+README.md
+LICENSE
+
+/.idea/
+/target/
+/logs/
+/.vscode/
+
+/**/application-private.yml
+application-private.yml
+

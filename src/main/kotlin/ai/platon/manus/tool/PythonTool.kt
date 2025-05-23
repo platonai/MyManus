@@ -33,20 +33,20 @@ class PythonTool : AbstractTool() {
 			
 			""".trimIndent()
 
-        private const val name = "python_execute"
+        const val NAME = "PYTHON_EXECUTE"
 
-        private val description = """
+        val DESCRIPTION = """
 ### Execute Python Code
 
 Executes a Python code string in a controlled environment.
 **Note:** Only output from `print` statements is visible. Return values from functions are not captured.
 Use `print` statements to display results.
 
-			""".trimIndent()
+"""
 
         val functionToolCallback: FunctionToolCallback<*, *>
-            get() = FunctionToolCallback.builder(name, PythonTool())
-                .description(description)
+            get() = FunctionToolCallback.builder(NAME, PythonTool())
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .build()

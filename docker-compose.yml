@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  my-manus:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - PLAYWRIGHT_BROWSERS_PATH=/app/pw-browsers
+      - PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=0
+    volumes:
+      - ./logs:/app/logs
+      - ./pw-browsers:/app/pw-browsers
+    restart: unless-stopped

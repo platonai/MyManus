@@ -12,7 +12,7 @@ class MyManusAgent(
     private val workingDirectory: String
 ) : ToolCallAgent(llmService, toolCallingManager) {
     companion object {
-        const val NAME = "MyManus"
+        const val NAME = "MY_MANUS"
     }
 
     override val name: String = NAME

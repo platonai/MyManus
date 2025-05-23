@@ -3,6 +3,7 @@ package ai.platon.manus.agent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.manus.tool.Bash
 import ai.platon.manus.tool.FileSaver
+import ai.platon.manus.tool.PythonTool
 import ai.platon.manus.tool.Summary
 import org.apache.commons.lang3.SystemUtils
 import org.springframework.ai.chat.messages.Message
@@ -17,7 +18,7 @@ class FileAgent(
 ) : ToolCallAgent(llmService, toolCallingManager) {
     private val currentFileState = AtomicReference<Map<String, Any>>()
 
-    override val name = "FILE_AGENT"
+    override val name = FileSaver.NAME
 
     override val description = """
 A file system agent capable of performing read/write operations across multiple file formats
@@ -68,6 +69,7 @@ A file system agent capable of performing read/write operations across multiple 
     private fun prepareToolCallList(): List<ToolCallback> {
         val tools = listOf<ToolCallback>(
             FileSaver.functionToolCallback,
+            PythonTool.functionToolCallback,
             Summary.getFunctionToolCallback(this, llmService.memory, conversationId)
         )
 

@@ -68,7 +68,7 @@ open class ToolCallAgent(
             val response0 = response ?: return false
             val toolCalls = response0.result.output.toolCalls
 
-            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, response0.result.output.text)
+            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, response0.result.output)
             logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
             val answer = response0.result.output.text

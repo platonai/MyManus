@@ -5,13 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>ai.platon</groupId>
-    <artifactId>mymanus</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <artifactId>agents</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
 
-    <name>My Manus</name>
+    <name>MyManus</name>
+    <description>MyManus</description>
 
     <build>
-        <defaultGoal>install</defaultGoal>
+        <defaultGoal>package</defaultGoal>
 
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
@@ -119,9 +120,35 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <!-- see docs/development/native-image.md -->
+                    <!--
+                    TODO: failed to build image, can not connect to registry-1.docker.io without proxy, and can not connect to local proxy, need a solution
+                    -->
+                    <!--                    <image>-->
+                    <!--                        <name>platonai/my-agents</name>-->
+                    <!--                        &lt;!&ndash; Sadly, there are still problems to run  &ndash;&gt;-->
+                    <!--                        <builder>paketobuildpacks/builder:tiny</builder>-->
+                    <!--                        <env>-->
+                    <!--                            <BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE> &lt;!&ndash; Enable native image build &ndash;&gt;-->
+                    <!--                        </env>-->
+                    <!--                    </image>-->
+                    <mainClass>ai.platon.agents.api.PulsarAgentsApplicationKt</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <!-- Native Profile -->
+    <profiles>
+        <profile>
+            <id>native</id>
+            <properties>
+                <spring-boot.build-image.pullPolicy>IF_NOT_PRESENT</spring-boot.build-image.pullPolicy>
+            </properties>
+        </profile>
+
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -143,7 +170,7 @@
             <dependency>
                 <groupId>ai.platon.pulsar</groupId>
                 <artifactId>pulsar-bom</artifactId>
-                <version>2.2.1</version>
+                <version>${platon-pulsar.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -184,6 +211,10 @@
             <groupId>ai.platon.pulsar</groupId>
             <artifactId>pulsar-protocol</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ai.platon.pulsar</groupId>
+            <artifactId>pulsar-ql</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -201,12 +232,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.microsoft.playwright</groupId>
-            <artifactId>playwright</artifactId>
-            <version>1.50.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib-jdk8</artifactId>
             <version>${kotlin.version}</version>
@@ -216,12 +241,7 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-test</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test-junit</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
-        </dependency>
+
 
         <!-- Test Dependencies -->
         <dependency>
@@ -236,17 +256,7 @@
             <scope>test</scope>
         </dependency>
         <!-- mockito-kotlin -->
-        <dependency>
-            <groupId>org.mockito.kotlin</groupId>
-            <artifactId>mockito-kotlin</artifactId>
-            <version>5.4.0</version>
-        </dependency>
 
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -279,8 +289,12 @@
         <spring-ai.version>1.0.0-M6</spring-ai.version>
         <spring-boot.version>3.3.8</spring-boot.version>
 
+        <!-- https://mvnrepository.com/artifact/ai.platon.pulsar -->
+        <platon-pulsar.version>3.0.7</platon-pulsar.version>
+
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <spring-javaformat-maven-plugin.version>0.0.39</spring-javaformat-maven-plugin.version>
+        <native.maven.plugin.version>0.10.6</native.maven.plugin.version>
     </properties>
 
 </project>
