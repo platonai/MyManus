@@ -42,7 +42,7 @@ A file system agent capable of performing read/write operations across multiple 
         return SystemPromptTemplate(FILE_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
-    override val toolCallList = prepareToolCallList()
+    override val toolCallbacks = prepareToolCallList()
 
     override var data: Map<String, Any?>
         get() {
@@ -70,7 +70,7 @@ A file system agent capable of performing read/write operations across multiple 
         val tools = listOf<ToolCallback>(
             FileSaver.functionToolCallback,
             PythonTool.functionToolCallback,
-            Summary.getFunctionToolCallback(this, llmService.memory, conversationId)
+            Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
         )
 
         val moreTools = when {

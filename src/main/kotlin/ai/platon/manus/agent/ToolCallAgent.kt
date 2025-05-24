@@ -8,8 +8,7 @@ import ai.platon.manus.tool.Summary
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY
+import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse
@@ -49,7 +48,7 @@ open class ToolCallAgent(
 
     private fun doThinkWithRetry(retry: Int): Boolean {
         try {
-            val messages: MutableList<Message> = ArrayList()
+            val messages = mutableListOf<Message>()
             addThinkPrompt(messages)
 
             val chatOptions = ToolCallingChatOptions.builder().internalToolExecutionEnabled(false).build()
@@ -58,21 +57,20 @@ open class ToolCallAgent(
 
             userPrompt = Prompt(messages, chatOptions)
 
-            response = llmService.agentClient.prompt(userPrompt).advisors {
-                it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                    .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100) }
-                .tools(toolCallList)
+            response = llmService.agentClient.prompt(userPrompt)
+                .advisors { it.param(CONVERSATION_ID, conversationId) }
+                .toolCallbacks(toolCallbacks)
                 .call()
                 .chatResponse()
 
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-//            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, thoughts.result.output)
-//            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
+            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, thoughts.result.output)
+            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
             val answer = thoughts.result.output.text
-            if (answer != null && answer.isNotEmpty()) {
+            if (!answer.isNullOrEmpty()) {
                 logger.info("""✨ {}'s thoughts: 🗯{}🗯""", name, answer)
             }
 
@@ -100,7 +98,7 @@ open class ToolCallAgent(
             val result = toolCallingManager.executeToolCalls(userPrompt, response0)
             val index = result.conversationHistory().size - 1
             val responseMessage = result.conversationHistory()[index] as ToolResponseMessage
-            llmService.memory.add(conversationId, responseMessage)
+            llmService.agentMemory.add(conversationId, responseMessage)
 
             val llmCallResponse = responseMessage.responses[0].responseData()
 
@@ -113,18 +111,18 @@ open class ToolCallAgent(
             val toolCall = response0.result.output.toolCalls[0]
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
-            llmService.memory.add(conversationId, responseMessage)
+            llmService.agentMemory.add(conversationId, responseMessage)
 
             logger.warn("""Act failed 😔 | {}""", e.message)
             return String.format("""Act failed 😔 | %s""", e.message)
         }
     }
 
-    override val toolCallList = listOf<ToolCallback>(
+    override val toolCallbacks = listOf<ToolCallback>(
         GoogleSearch.functionToolCallback,
         FileSaver.functionToolCallback,
         PythonTool.functionToolCallback,
-        Summary.getFunctionToolCallback(this, llmService.memory, conversationId)
+        Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
     )
 
     companion object {

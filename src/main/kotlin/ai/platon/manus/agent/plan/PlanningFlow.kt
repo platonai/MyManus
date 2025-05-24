@@ -5,11 +5,10 @@ import ai.platon.manus.agent.MyManusAgent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.manus.tool.PlanningTool
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.alwaysTrue
 import ai.platon.pulsar.common.warnInterruptible
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.PromptTemplate
@@ -32,16 +31,13 @@ class PlanningFlow(
 
     private var currentStepIndex: Int = -1
 
-    override val tools: MutableList<ToolCallback> = mutableListOf(PlanningTool.functionToolCallback)
+    override val toolCallbacks: MutableList<ToolCallback> = mutableListOf(PlanningTool.functionToolCallback)
 
     val currentPlanContent: String get() = getCurrentPlanContent(planId)
 
     init {
-        if (data.containsKey("executors")) {
-            this.executorKeys = data.remove("executors") as MutableList<String>
-        }
         if (executorKeys.isEmpty()) {
-            agents.map { it.name.uppercase(Locale.getDefault()) }.toCollection(executorKeys)
+            agents.map { it.name.uppercase() }.toCollection(executorKeys)
         }
 
         planId = if (data.containsKey("plan_id")) {
@@ -128,14 +124,14 @@ class PlanningFlow(
         )
 
         val prompt = PromptTemplate(INITIAL_PLAN_PROMPT).create(params)
-        val llmRequest = llmService.reasonerClient
+        val llmRequest = llmService.planningChatClient
             .prompt(prompt)
-            .tools(tools)
-            .advisors {
-                it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, planId)
-                    .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)
-            }
+            .toolCallbacks(toolCallbacks)
             .user(request)
+        val useMemory = alwaysTrue()
+        if (useMemory) {
+            llmRequest.advisors(MessageChatMemoryAdvisor.builder(llmService.conversationMemory).build())
+        }
 
         val llmResponse = llmRequest.call()
 
@@ -148,9 +144,9 @@ class PlanningFlow(
         val response = askForAnInitialPlan(request)
 
         // Notice: use `currentPlanContent` to see the content of AI's response
-        // TODO: why the response can be null?
-        if (response != null && response.result != null) {
-            val plan = response.result.output.text.replace("\\n+".toRegex(), "\\n")
+        val outputText = response?.result?.output?.text
+        if (outputText != null) {
+            val plan = outputText.replace("\\n+".toRegex(), "\\n")
             logger.info("Plan: $plan")
             return
         }
@@ -391,9 +387,9 @@ class PlanningFlow(
     internal fun requestFinalizePlan(prompt: String): ChatResponse? {
         return llmService.finalizeChatClient
             .prompt()
-            .advisors(MessageChatMemoryAdvisor(llmService.memory))
-            .advisors { it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, planId)
-                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)}
+//            .advisors(MessageChatMemoryAdvisor(llmService.memory))
+//            .advisors { it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, planId)
+//                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)}
             .user(prompt)
             .call()
             .chatResponse()

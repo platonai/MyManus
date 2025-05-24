@@ -38,5 +38,5 @@ abstract class FlowBase(
 
     abstract fun execute(inputText: String): String
 
-    abstract val tools: List<ToolCallback>
+    abstract val toolCallbacks: List<ToolCallback>
 }

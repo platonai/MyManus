@@ -41,10 +41,10 @@ Note:
         return result
     }
 
-    override val toolCallList: List<ToolCallback>
+    override val toolCallbacks: List<ToolCallback>
         get() = listOf<ToolCallback>(
             PythonTool.functionToolCallback, Summary.getFunctionToolCallback(
-                this, llmService.memory, conversationId
+                this, llmService.agentMemory, conversationId
             )
         )
 

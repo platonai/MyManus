@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.tool.ToolCallback
-import java.util.concurrent.locks.ReentrantLock
 
 enum class AgentState(private val state: String) {
     IDLE("IDLE"), RUNNING("RUNNING"), FINISHED("FINISHED"), ERROR("ERROR");
@@ -39,7 +38,7 @@ abstract class MyAgent(
 
     protected abstract val nextStepMessage: Message
 
-    abstract val toolCallList: List<ToolCallback>
+    abstract val toolCallbacks: List<ToolCallback>
 
     /**
      * Run the agent with the given data. Returns the information of each step.
