@@ -58,22 +58,22 @@ open class ToolCallAgent(
 
             userPrompt = Prompt(messages, chatOptions)
 
-            response = llmService.chatClient.prompt(userPrompt).advisors {
+            response = llmService.agentClient.prompt(userPrompt).advisors {
                 it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
                     .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100) }
                 .tools(toolCallList)
                 .call()
                 .chatResponse()
 
-            val response0 = response ?: return false
-            val toolCalls = response0.result.output.toolCalls
+            val thoughts = response ?: return false
+            val toolCalls = thoughts.result.output.toolCalls
 
-            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, response0.result.output)
-            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
+//            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, thoughts.result.output)
+//            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
 
-            val answer = response0.result.output.text
+            val answer = thoughts.result.output.text
             if (answer != null && answer.isNotEmpty()) {
-                logger.info("""✨ {}'s response: 🗯{}🗯""", name, answer)
+                logger.info("""✨ {}'s thoughts: 🗯{}🗯""", name, answer)
             }
 
             if (toolCalls.isNotEmpty()) {

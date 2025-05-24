@@ -18,8 +18,6 @@ abstract class MyAgent(
 ): AutoCloseable {
     private val logger: Logger = LoggerFactory.getLogger(MyAgent::class.java)
 
-    private val lock = ReentrantLock()
-
     var conversationId: String = ""
 
     var state = AgentState.IDLE

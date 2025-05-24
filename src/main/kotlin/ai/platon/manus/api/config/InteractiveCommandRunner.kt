@@ -29,7 +29,7 @@ class InteractiveCommandRunner(
             planningFlow.newPlan(planID)
             val result = planningFlow.execute(input)
 
-            println("Plan : ${planningFlow.conversationId}")
+            println("Plan : ${planningFlow.planId}")
             println("Result: \n$result")
         }
     }
