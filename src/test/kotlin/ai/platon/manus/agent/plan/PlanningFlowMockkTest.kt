@@ -47,7 +47,7 @@ class PlanningFlowMockkTest {
     fun `test execute with empty input`() {
         val result = planningFlow.execute("")
         println(result)
-        assertTrue { result.isNotBlank() }
+        assertTrue { result.isBlank() }
     }
 
     @Test

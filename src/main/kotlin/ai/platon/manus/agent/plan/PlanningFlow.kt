@@ -60,6 +60,10 @@ class PlanningFlow(
     }
 
     override fun execute(inputText: String): String {
+        if (inputText.isBlank()) {
+            return ""
+        }
+
         return try {
             executeStepByStep(inputText)
         } catch (e: Exception) {
