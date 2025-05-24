@@ -40,7 +40,8 @@ Once you have FULLY completed the current step:
 
 const val TOOL_CALL_AGENT_NEXT_STEP_PROMPT = """
 What is the next step you would like to take?
-Please provide the step number or the name of the next step.
+
+Please provide the step number or the name of the next step, do not do anything else.
 
 """
 

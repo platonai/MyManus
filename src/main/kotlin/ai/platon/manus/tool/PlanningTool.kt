@@ -269,9 +269,6 @@ ${formatPlan(plan)}"""
         return """
 #💡$title💡
 
-* ID: $planId
-* Time: ${OffsetDateTime.now()}
-
 ## Status Summary
 $statusSummary
 

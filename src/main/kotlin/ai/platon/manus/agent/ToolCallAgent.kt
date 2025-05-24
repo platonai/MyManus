@@ -55,6 +55,11 @@ open class ToolCallAgent(
             val nextStepMessage = nextStepMessage
             messages.add(nextStepMessage)
 
+//            println("-----")
+//            println("ToolCallAgent think() | $name | $data")
+//            println(messages.joinToString("\n"))
+//            println(">>>>>")
+
             userPrompt = Prompt(messages, chatOptions)
 
             response = llmService.agentClient.prompt(userPrompt)

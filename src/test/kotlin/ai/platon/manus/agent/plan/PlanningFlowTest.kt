@@ -3,10 +3,8 @@ package ai.platon.manus.agent.plan
 import ai.platon.manus.MyTestApplication
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.context.ActiveProfiles
 import kotlin.test.assertContains
 
 @SpringBootTest(classes = [MyTestApplication::class])

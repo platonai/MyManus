@@ -108,8 +108,8 @@ one necessary tool call to proceed with the task.
 
     private fun isHung(): Boolean {
         // take the last 10 round messages
-        val count = llmService.memory.get(conversationId, 10)
-            .filterIsInstance<AssistantMessage>().count { it.toolCalls.isNullOrEmpty() }
+        val count = llmService.agentMemory.get(conversationId)
+            .filterIsInstance<AssistantMessage>().count { it.toolCalls.isEmpty() }
         return count >= 3
     }
 }
