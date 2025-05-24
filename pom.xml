@@ -200,7 +200,7 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-mcp-client-spring-boot-starter</artifactId>
-            <version>${spring-ai.version}</version>
+<!--            <version>1.0.0-M6</version>-->
         </dependency>
 
         <dependency>
@@ -286,6 +286,7 @@
         <kotlin.version>1.9.25</kotlin.version>
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
 
+<!--        <spring-ai.version>1.0.0-M6</spring-ai.version>-->
         <spring-ai.version>1.0.0-M6</spring-ai.version>
         <spring-boot.version>3.3.8</spring-boot.version>
 

@@ -53,7 +53,12 @@ class NativeWebDriver(private val driver: PulsarWebDriver) {
         }
     }
 
+    /**
+     * NOT FULLY IMPLEMENTED
+     * */
     suspend fun waitForLoadState(loadState: String) {
+        driver.delay(1000)
+
         val state = loadState.lowercase()
         when (state) {
             "load" -> {
