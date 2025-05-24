@@ -41,7 +41,14 @@ Once you have FULLY completed the current step:
 const val TOOL_CALL_AGENT_NEXT_STEP_PROMPT = """
 What is the next step you would like to take?
 
-Please provide the step number or the name of the next step, do not do anything else.
+Please provide the step number or the name of the next step. 
+
+You have all authority to decide the next step, but please ensure that it is relevant to the current task and follows 
+the guidelines provided.
+
+You have to use at least one tool to make progress. If you can use any tool, please do so, no need to ask for permission.
+
+If you can not choose any tool, please provide a detailed explanation.
 
 """
 

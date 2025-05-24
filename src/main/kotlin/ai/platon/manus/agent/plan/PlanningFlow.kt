@@ -68,7 +68,7 @@ class PlanningFlow(
         }
 
         return try {
-            executeStepByStep(inputText)
+            executeStepByStep()
         } catch (e: Exception) {
             val message = "Failed to execute the planning flow | " + e.message
             message.also { warnInterruptible(this, e, it) }
@@ -76,7 +76,7 @@ class PlanningFlow(
         }
     }
 
-    private fun executeStepByStep(inputText: String): String {
+    private fun executeStepByStep(): String {
         val result = StringBuilder()
         while (true) {
             val info = currentStepInfo()

@@ -95,10 +95,15 @@ open class ToolCallAgent(
     }
 
     override fun act(): String {
-        val response0 = response ?: return "Illegal state: null response"
+        val response0 = requireNotNull(response)
 
         try {
             val results: MutableList<String> = ArrayList()
+
+            val toolCalls = response!!.result.output.toolCalls
+            val toolCall = toolCalls[0]
+
+            logger.info("🔧 Tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
 
             val result = toolCallingManager.executeToolCalls(userPrompt, response0)
             val index = result.conversationHistory().size - 1
