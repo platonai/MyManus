@@ -1,5 +1,7 @@
 package ai.platon.manus.tool.support.serpapi
 
+import ai.platon.manus.tool.GoogleSearch.Companion.SERP_API_KEY
+import ai.platon.pulsar.common.config.ImmutableConfig
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -10,13 +12,14 @@ import kotlin.test.assertTrue
 class SerpApiServiceTest {
 
     companion object {
-        // TODO: use spring property manus.serp.api.key
-        val SERP_API_KEY: String = System.getenv("SERP_API_KEY")
+        private val conf = ImmutableConfig(loadDefaults = true)
+
+        val apiKey = conf.get("manus.serp.api.key") ?: ""
 
         @BeforeAll
         @JvmStatic
         fun setup() {
-            Assumptions.assumeTrue(SERP_API_KEY.isNotBlank())
+            Assumptions.assumeTrue(apiKey.isNotBlank())
         }
     }
 

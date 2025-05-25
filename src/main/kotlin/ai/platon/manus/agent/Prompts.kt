@@ -43,12 +43,9 @@ What is the next step you would like to take?
 
 Please provide the step number or the name of the next step. 
 
-You have all authority to decide the next step, but please ensure that it is relevant to the current task and follows 
+1. You have all authority to decide the next step, but please ensure that it is relevant to the current task and follows 
 the guidelines provided.
-
-You have to use at least one tool to make progress. If you can use any tool, please do so, no need to ask for permission.
-
-If you can not choose any tool, please provide a detailed explanation.
+2. IMPORTANT: You MUST use at least one tool in your response to make progress!
 
 """
 
@@ -133,7 +130,6 @@ Your responses must be always JSON with the specified format.
 
 const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
 What should I do next to achieve my goal?
-
 
 When you see [Current state starts here], focus on the following:
 - Current URL and page title:

@@ -2,6 +2,7 @@ package ai.platon.manus.tool
 
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.manus.tool.support.serpapi.SerpApiService
+import ai.platon.pulsar.common.config.ImmutableConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.function.FunctionToolCallback
@@ -90,8 +91,9 @@ class GoogleSearch : AbstractTool() {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(GoogleSearch::class.java)
 
-        // TODO: a better way to manage the SERP_API_KEY
-        var SERP_API_KEY = System.getenv("SERP_API_KEY") ?: ""
+        private val conf = ImmutableConfig(loadDefaults = true)
+
+        var SERP_API_KEY = conf["manus.serp.api.key"] ?: ""
 
         private val PARAMETERS = """
 			{
