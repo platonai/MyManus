@@ -8,6 +8,7 @@ import ai.platon.manus.api.service.LlmService
 import ai.platon.manus.tool.PlanningTool
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.pulsar.common.alwaysTrue
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.warnInterruptible
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
@@ -132,7 +133,7 @@ class PlanningFlow(
             .prompt(prompt)
             .toolCallbacks(toolCallbacks)
             .user(request)
-        conversationLogger.info("\n\n-------------------\nMyManus:\n{}", llmRequest)
+        // conversationLogger.info("\n\n-------------------\nMyManus:\n{}", llmRequest.messages)
 
         val useMemory = alwaysTrue()
         if (useMemory) {
@@ -142,7 +143,7 @@ class PlanningFlow(
         val llmResponse = llmRequest.call()
 
         val response = llmResponse.chatResponse()
-        conversationLogger.info("\n\nAI:\n{}", response)
+        conversationLogger.info("\n\nAI:\n{}", prettyPulsarObjectMapper().writeValueAsString(response))
 
         return response
     }

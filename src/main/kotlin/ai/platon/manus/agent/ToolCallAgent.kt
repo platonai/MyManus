@@ -8,6 +8,8 @@ import ai.platon.manus.tool.Summary
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.ai.chat.client.DefaultChatClient
+import org.springframework.ai.chat.client.DefaultChatClient.DefaultCallResponseSpec
 import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.ToolResponseMessage
@@ -60,7 +62,9 @@ open class ToolCallAgent(
             val request = llmService.agentClient.prompt(userPrompt)
                 .advisors { it.param(CONVERSATION_ID, conversationId) }
                 .toolCallbacks(toolCallbacks)
-            conversationLogger.info("\n\n-------------------\nMyManus:\n{}", request)
+            if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
+                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}", request.systemText, request.userText)
+            }
 
             response = request.call().chatResponse()
 

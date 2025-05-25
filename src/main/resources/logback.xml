@@ -36,7 +36,8 @@
 
     <!-- 特定包的日志级别调整 -->
     <logger name="ai.platon.manus" level="INFO"/>
-    <logger name="ai.platon.manus.conversation" level="INFO">
+
+    <logger name="ai.platon.manus.conversation" level="INFO" additivity="false">
         <appender-ref ref="CONVERSATION"/>
     </logger>
 
