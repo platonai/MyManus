@@ -16,8 +16,7 @@ class PythonAgent(
 ) : ToolCallAgent(llmService, toolCallingManager) {
     private var lastResult: String? = null
 
-    override val name: String
-        get() = PythonTool.NAME
+    override val name: String = "PYTHON_AGENT"
 
     override val description: String
         get() = """
