@@ -44,7 +44,7 @@ class Bash(
 			
 			""".trimIndent()
 
-        private const val NAME = "BASH"
+        private const val NAME = "bash"
 
         private val DESCRIPTION = """
 ### Execute a Bash Command in the Terminal

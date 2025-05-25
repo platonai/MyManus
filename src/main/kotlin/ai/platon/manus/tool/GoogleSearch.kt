@@ -112,7 +112,7 @@ class GoogleSearch : AbstractTool() {
 			
 			""".trimIndent()
 
-        private const val NAME = "GOOGLE_SEARCH"
+        private const val NAME = "google_search"
 
         private const val DESCRIPTION = """
 ### Google Search

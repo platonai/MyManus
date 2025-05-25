@@ -331,7 +331,7 @@ $stepsSummary
 			
 			""".trimIndent()
 
-        private const val NAME = "PLANNING"
+        private const val NAME = "planning"
 
         private val DESCRIPTION = """
 ### Planning Tool

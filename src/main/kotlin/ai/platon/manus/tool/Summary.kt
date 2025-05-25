@@ -38,7 +38,7 @@ class Summary(
 			}
 			""".trimIndent()
 
-        private const val NAME = "SUMMARY"
+        private const val NAME = "summary"
 
         private const val DESCRIPTION = "Record the summary of current step and terminate the current step"
 

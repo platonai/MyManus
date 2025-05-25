@@ -284,9 +284,9 @@ class BrowserUseTool() : AbstractTool() {
 
         var ACTIVE_DRIVER: WebDriver = BROWSER.newDriver()
 
-        private val NAME = "BROWSER_USE"
+        private const val NAME = "browser_use"
 
-        private val DESCRIPTION = BROWSER_USE_TOOL_DESCRIPTION
+        private const val DESCRIPTION = BROWSER_USE_TOOL_DESCRIPTION
 
         private val PARAMETERS = BROWSER_USE_TOOL_PARAMETERS.trimIndent()
 
