@@ -22,7 +22,7 @@ import org.springframework.ai.tool.ToolCallback
 
 open class ToolCallAgent(
     llmService: LlmService, private val toolCallingManager: ToolCallingManager
-) : ThinkAndActAgent(llmService) {
+) : ReActAgent(llmService) {
     private val logger: Logger = LoggerFactory.getLogger(ToolCallAgent::class.java)
 
     private var response: ChatResponse? = null
@@ -55,11 +55,6 @@ open class ToolCallAgent(
             val nextStepMessage = nextStepMessage
             messages.add(nextStepMessage)
 
-//            println("-----")
-//            println("ToolCallAgent think() | $name | $data")
-//            println(messages.joinToString("\n"))
-//            println(">>>>>")
-
             userPrompt = Prompt(messages, chatOptions)
 
             response = llmService.agentClient.prompt(userPrompt)
@@ -71,17 +66,7 @@ open class ToolCallAgent(
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, thoughts.result.output)
-            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
-
-            val answer = thoughts.result.output.text
-            if (!answer.isNullOrEmpty()) {
-                logger.info("""✨ {}'s thoughts: 🗯{}🗯""", name, answer)
-            }
-
-            if (toolCalls.isNotEmpty()) {
-                logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
-            }
+            reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = true)
 
             return toolCalls.isNotEmpty()
         } catch (e: Exception) {
@@ -91,6 +76,26 @@ open class ToolCallAgent(
                 return doThinkWithRetry(retry + 1)
             }
             return false
+        }
+    }
+
+    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
+        val thoughts = response
+        val toolCalls = thoughts.result.output.toolCalls
+
+        if (verbose) {
+            logger.info("""😇 agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
+            logger.info("🛠️ agent has selected tools to use | [{}] {} | {}", name, toolCalls.size, toolCalls.map { it.name })
+
+            return
+        }
+
+        val answer = thoughts.result.output.text
+        if (!answer.isNullOrEmpty()) {
+            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
+        }
+        if (toolCalls.isNotEmpty()) {
+            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
         }
     }
 

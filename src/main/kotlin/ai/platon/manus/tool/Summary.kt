@@ -1,7 +1,7 @@
 package ai.platon.manus.tool
 
 import ai.platon.manus.agent.AgentState
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import org.slf4j.Logger
@@ -11,7 +11,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback
 import org.springframework.ai.tool.metadata.ToolMetadata
 
 class Summary(
-    private val agent: MyAgent,
+    private val agent: AbstractAgent,
     private val chatMemory: ChatMemory,
     private val conversationId: String
 ) : AbstractTool() {
@@ -43,7 +43,7 @@ class Summary(
         private const val DESCRIPTION = "Record the summary of current step and terminate the current step"
 
         fun getFunctionToolCallback(
-            agent: MyAgent, chatMemory: ChatMemory, conversationId: String
+            agent: AbstractAgent, chatMemory: ChatMemory, conversationId: String
         ): FunctionToolCallback<*, *> {
             return FunctionToolCallback.builder(NAME, Summary(agent, chatMemory, conversationId))
                 .description(DESCRIPTION)

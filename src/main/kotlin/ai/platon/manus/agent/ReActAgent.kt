@@ -4,7 +4,7 @@ import ai.platon.manus.api.service.LlmService
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.UserMessage
 
-abstract class ThinkAndActAgent(llmService: LlmService) : MyAgent(llmService) {
+abstract class ReActAgent(llmService: LlmService) : AbstractAgent(llmService) {
 
     /**
      * Perform the next step of the agent: think and act.

@@ -52,14 +52,7 @@ class BrowserAgent(
 
     override val toolCallbacks: List<ToolCallback> = listOf(
         GoogleSearch.functionToolCallback,
-        FileSaver.functionToolCallback,
-        PythonTool.functionToolCallback,
-        BrowserUseTool.getFunctionToolCallback(),
-        Summary.getFunctionToolCallback(
-            this,
-            llmService.agentMemory,
-            conversationId
-        )
+        BrowserUseTool.getFunctionToolCallback()
     )
 
     private fun doGetData(): Map<String, Any?> {

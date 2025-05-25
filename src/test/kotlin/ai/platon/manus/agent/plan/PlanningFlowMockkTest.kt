@@ -1,7 +1,7 @@
 package ai.platon.manus.agent.plan
 
 import ai.platon.manus.MyTestApplication
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import io.mockk.every
@@ -26,10 +26,10 @@ class PlanningFlowMockkTest {
     private lateinit var llmService: LlmService
 
     @MockK
-    private lateinit var agent1: MyAgent
+    private lateinit var agent1: AbstractAgent
 
     @MockK
-    private lateinit var agent2: MyAgent
+    private lateinit var agent2: AbstractAgent
 
     private lateinit var planningFlow: PlanningFlow
 

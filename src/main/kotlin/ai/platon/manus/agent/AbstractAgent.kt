@@ -12,10 +12,10 @@ enum class AgentState(private val state: String) {
     override fun toString() = state
 }
 
-abstract class MyAgent(
+abstract class AbstractAgent(
     protected var llmService: LlmService
 ): AutoCloseable {
-    private val logger: Logger = LoggerFactory.getLogger(MyAgent::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(AbstractAgent::class.java)
 
     var conversationId: String = ""
 

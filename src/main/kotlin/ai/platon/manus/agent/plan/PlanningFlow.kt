@@ -1,6 +1,8 @@
 package ai.platon.manus.agent.plan
 
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
+import ai.platon.manus.agent.FINALIZE_PLAN_PROMPT
+import ai.platon.manus.agent.INITIAL_PLAN_PROMPT
 import ai.platon.manus.agent.MyManusAgent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.manus.tool.PlanningTool
@@ -18,7 +20,7 @@ import java.util.regex.Pattern
 
 class PlanningFlow(
     var llmService: LlmService,
-    agents: List<MyAgent>,
+    agents: List<AbstractAgent>,
     data: MutableMap<String, Any> = mutableMapOf(),
 ) : FlowBase(agents, data) {
     private val logger = LoggerFactory.getLogger(PlanningFlow::class.java)
@@ -49,7 +51,7 @@ class PlanningFlow(
         this.planningTool = data.computeIfAbsent("planning_tool") { PlanningTool.INSTANCE } as PlanningTool
     }
 
-    constructor(llmService: LlmService, vararg agents: MyAgent): this(llmService, agents.toList())
+    constructor(llmService: LlmService, vararg agents: AbstractAgent): this(llmService, agents.toList())
 
     fun newPlan(planID: String) {
         this.planId = planID
@@ -223,7 +225,7 @@ class PlanningFlow(
         }
     }
 
-    internal fun executeStep(agent: MyAgent, stepInfo: Map<String, String>): String {
+    internal fun executeStep(agent: AbstractAgent, stepInfo: Map<String, String>): String {
         try {
             val planStatus = currentPlanContent
             val stepText = stepInfo["text"] ?: "Step $currentStepIndex"
@@ -289,7 +291,7 @@ class PlanningFlow(
         return null
     }
 
-    internal fun chooseBestAgent(stepType: String?): MyAgent {
+    internal fun chooseBestAgent(stepType: String?): AbstractAgent {
         val agent = agents.firstOrNull { it.name.equals(stepType, ignoreCase = true) }
         if (agent != null) {
             return agent
@@ -301,7 +303,7 @@ class PlanningFlow(
         }
 
         backup = agents.firstOrNull()
-        check(backup is MyAgent) { "No agents available in the system" }
+        check(backup is AbstractAgent) { "No agents available in the system" }
         logger.warn("Pick the first agent as default | {}", backup.name)
 
         return backup

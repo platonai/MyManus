@@ -42,9 +42,8 @@ Note:
 
     override val toolCallbacks: List<ToolCallback>
         get() = listOf<ToolCallback>(
-            PythonTool.functionToolCallback, Summary.getFunctionToolCallback(
-                this, llmService.agentMemory, conversationId
-            )
+            PythonTool.functionToolCallback,
+            Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
         )
 
     override var data: Map<String, Any?>
