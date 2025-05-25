@@ -38,15 +38,15 @@ class Summary(
 			}
 			""".trimIndent()
 
-        private const val name = "summary"
+        private const val NAME = "SUMMARY"
 
-        private const val description = "Record the summary of current step and terminate the current step"
+        private const val DESCRIPTION = "Record the summary of current step and terminate the current step"
 
         fun getFunctionToolCallback(
             agent: MyAgent, chatMemory: ChatMemory, conversationId: String
         ): FunctionToolCallback<*, *> {
-            return FunctionToolCallback.builder(name, Summary(agent, chatMemory, conversationId))
-                .description(description)
+            return FunctionToolCallback.builder(NAME, Summary(agent, chatMemory, conversationId))
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .toolMetadata(ToolMetadata.builder().returnDirect(true).build()).build()

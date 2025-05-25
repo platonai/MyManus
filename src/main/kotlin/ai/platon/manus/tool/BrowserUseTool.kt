@@ -284,9 +284,9 @@ class BrowserUseTool() : AbstractTool() {
 
         var ACTIVE_DRIVER: WebDriver = BROWSER.newDriver()
 
-        private val name = "browser_use"
+        private val NAME = "BROWSER_USE"
 
-        private val description = BROWSER_USE_TOOL_DESCRIPTION.trimIndent()
+        private val DESCRIPTION = BROWSER_USE_TOOL_DESCRIPTION
 
         private val PARAMETERS = BROWSER_USE_TOOL_PARAMETERS.trimIndent()
 
@@ -302,8 +302,8 @@ class BrowserUseTool() : AbstractTool() {
         val INSTANCE: BrowserUseTool by lazy { BrowserUseTool() }
 
         fun getFunctionToolCallback(): FunctionToolCallback<*, *> {
-            return FunctionToolCallback.builder(name, INSTANCE)
-                .description(description)
+            return FunctionToolCallback.builder(NAME, INSTANCE)
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .build()

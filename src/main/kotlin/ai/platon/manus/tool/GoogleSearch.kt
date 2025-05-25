@@ -112,21 +112,21 @@ class GoogleSearch : AbstractTool() {
 			
 			""".trimIndent()
 
-        private const val name = "google_search"
+        private const val NAME = "GOOGLE_SEARCH"
 
-        private val description = """
+        private const val DESCRIPTION = """
 ### Google Search
 
 Use this tool to search the web for information, retrieve the latest data, or explore specific topics.
 It performs a Google search based on the provided query and returns a list of relevant URLs matching the search criteria.
 
-			""".trimIndent()
+"""
 
         val INSTANCE = GoogleSearch()
 
         val functionToolCallback: FunctionToolCallback<*, *>
-            get() = FunctionToolCallback.builder(name, INSTANCE)
-                .description(description)
+            get() = FunctionToolCallback.builder(NAME, INSTANCE)
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .build()

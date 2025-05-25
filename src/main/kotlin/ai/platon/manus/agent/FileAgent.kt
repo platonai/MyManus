@@ -18,7 +18,7 @@ class FileAgent(
 ) : ToolCallAgent(llmService, toolCallingManager) {
     private val currentFileState = AtomicReference<Map<String, Any>>()
 
-    override val name = FileSaver.NAME
+    override val name = "FILE_AGENT"
 
     override val description = """
 A file system agent capable of performing read/write operations across multiple file formats

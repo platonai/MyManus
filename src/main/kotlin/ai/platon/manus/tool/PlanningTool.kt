@@ -331,9 +331,9 @@ $stepsSummary
 			
 			""".trimIndent()
 
-        private const val name = "planning"
+        private const val NAME = "PLANNING"
 
-        private val description = """
+        private val DESCRIPTION = """
 ### Planning Tool
 
 A utility that enables the agent to create, manage, and execute plans for solving complex tasks.  
@@ -342,7 +342,7 @@ It supports creating new plans, updating individual steps, and tracking overall 
 			""".trimIndent()
 
         val functionToolCallback: FunctionToolCallback<*, *>
-            get() = FunctionToolCallback.builder(name, INSTANCE).description(description)
+            get() = FunctionToolCallback.builder(NAME, INSTANCE).description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .toolMetadata(ToolMetadata.builder().returnDirect(true).build())

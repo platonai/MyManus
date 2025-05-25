@@ -44,9 +44,9 @@ class Bash(
 			
 			""".trimIndent()
 
-        private const val name = "bash"
+        private const val NAME = "BASH"
 
-        private val description = """
+        private val DESCRIPTION = """
 ### Execute a Bash Command in the Terminal
 
 **Long-Running Commands:**  
@@ -68,8 +68,8 @@ If the execution result indicates `"Command timed out. Sending SIGINT to the pro
 			""".trimIndent()
 
         fun getFunctionToolCallback(workingDirectory: String): FunctionToolCallback<*, *> {
-            return FunctionToolCallback.builder(name, Bash(workingDirectory))
-                .description(description)
+            return FunctionToolCallback.builder(NAME, Bash(workingDirectory))
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java).build()
         }

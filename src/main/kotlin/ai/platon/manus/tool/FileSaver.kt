@@ -46,7 +46,7 @@ class FileSaver : AbstractTool() {
 			
 			""".trimIndent()
 
-        const val NAME = "FILE_AGENT"
+        const val NAME = "FILE_SAVER"
 
         val DESCRIPTION = """
 ### Save Content to a Local File
