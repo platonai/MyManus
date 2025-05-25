@@ -17,6 +17,8 @@ abstract class AbstractAgent(
 ): AutoCloseable {
     private val logger: Logger = LoggerFactory.getLogger(AbstractAgent::class.java)
 
+    protected val conversationLogger = LoggerFactory.getLogger("ai.platon.manus.conversation")
+
     var conversationId: String = ""
 
     var state = AgentState.IDLE

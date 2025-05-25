@@ -13,13 +13,13 @@ class SimpleAgentTaskRunner : ApplicationRunner {
     lateinit var planningFlow: PlanningFlow
 
     override fun run(args: ApplicationArguments) {
-        val args = args.sourceArgs
-        if (args.isEmpty()) {
+        val args1 = args.sourceArgs
+        if (args1.isEmpty()) {
             return
         }
 
         planningFlow.newPlan("plan_" + System.currentTimeMillis())
-        planningFlow.execute(args[0])
+        planningFlow.execute(args1[0])
 
         exitProcess(0)
     }

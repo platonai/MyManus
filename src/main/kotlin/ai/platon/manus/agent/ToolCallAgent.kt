@@ -57,16 +57,18 @@ open class ToolCallAgent(
 
             userPrompt = Prompt(messages, chatOptions)
 
-            response = llmService.agentClient.prompt(userPrompt)
+            val request = llmService.agentClient.prompt(userPrompt)
                 .advisors { it.param(CONVERSATION_ID, conversationId) }
                 .toolCallbacks(toolCallbacks)
-                .call()
-                .chatResponse()
+            conversationLogger.info("\n\n-------------------\nMyManus:\n{}", request)
+
+            response = request.call().chatResponse()
 
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-            reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = true)
+            conversationLogger.info("\n\nAI:\n{}", thoughts)
+            reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
             return toolCalls.isNotEmpty()
         } catch (e: Exception) {

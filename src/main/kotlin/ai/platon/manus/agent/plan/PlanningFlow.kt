@@ -24,6 +24,8 @@ class PlanningFlow(
     data: MutableMap<String, Any> = mutableMapOf(),
 ) : FlowBase(agents, data) {
     private val logger = LoggerFactory.getLogger(PlanningFlow::class.java)
+    protected val conversationLogger = LoggerFactory.getLogger("ai.platon.manus.conversation")
+
     private var planningTool: PlanningTool
     private var executorKeys: MutableList<String> = mutableListOf()
     private val finishedPlans = mutableSetOf<String>()
@@ -130,6 +132,8 @@ class PlanningFlow(
             .prompt(prompt)
             .toolCallbacks(toolCallbacks)
             .user(request)
+        conversationLogger.info("\n\n-------------------\nMyManus:\n{}", llmRequest)
+
         val useMemory = alwaysTrue()
         if (useMemory) {
             llmRequest.advisors(MessageChatMemoryAdvisor.builder(llmService.conversationMemory).build())
@@ -138,6 +142,7 @@ class PlanningFlow(
         val llmResponse = llmRequest.call()
 
         val response = llmResponse.chatResponse()
+        conversationLogger.info("\n\nAI:\n{}", response)
 
         return response
     }
