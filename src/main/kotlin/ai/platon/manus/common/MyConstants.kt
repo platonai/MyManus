@@ -42,7 +42,7 @@ return Array.from(elements).map((el, index) => {
         tagName: el.tagName.toLowerCase(),
         type: el.getAttribute('type'),
         role: el.getAttribute('role'),
-        text: el.textContent?.trim(),
+        text: el.textContent?.trim()?.substring(0, 200) || '',
         value: el.value,
         placeholder: el.getAttribute('placeholder'),
         name: el.getAttribute('name'),

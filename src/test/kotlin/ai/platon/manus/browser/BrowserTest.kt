@@ -1,5 +1,6 @@
 package ai.platon.manus.browser
 
+import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import org.junit.jupiter.api.AfterAll
@@ -71,4 +72,25 @@ class BrowserTest {
         assertTrue { propertyNames is List<*> }
     }
 
+    @Test
+    fun `test JS_GET_INTERACTIVE_ELEMENTS`() = webDriverService.runWebDriverTest("https://www.baidu.com", browser) { driver ->
+        val code = JS_GET_INTERACTIVE_ELEMENTS
+
+        val result = driver.evaluateValueDetail("($code)()")
+
+        // println(result)
+        assertNotNull(result)
+        assertNull(result.exception)
+
+        val elementsInfo = result.value as List<MutableMap<String, Any?>>
+        elementsInfo.forEach { element ->
+            if (element["tagName"] == "textarea") {
+                element["text"] = ""
+                element["value"] = ""
+            }
+        }
+
+        val value = result.value
+        assertNotNull(value)
+    }
 }
