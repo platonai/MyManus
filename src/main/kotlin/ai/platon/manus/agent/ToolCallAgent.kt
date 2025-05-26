@@ -24,6 +24,11 @@ import org.springframework.ai.tool.ToolCallback
 open class ToolCallAgent(
     llmService: LlmService, private val toolCallingManager: ToolCallingManager
 ) : ReActAgent(llmService) {
+
+    companion object {
+        private const val REPLY_MAX = 3
+    }
+
     private val logger: Logger = LoggerFactory.getLogger(ToolCallAgent::class.java)
 
     private var response: ChatResponse? = null
@@ -68,8 +73,8 @@ open class ToolCallAgent(
 //                    request.messages.joinToString("\n") { it.text })
 
                 val requestText = request.messages.joinToString("\n") { it.text }
-                conversationLogger.info("===========================================================================" +
-                        "\nMyManus:\n\n{}\n\n\n", requestText)
+                conversationLogger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +
+                        "\nMY MANUS:\n\n{}\n\n\n", requestText)
             }
 
             response = request.call().chatResponse()
@@ -77,10 +82,11 @@ open class ToolCallAgent(
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-            conversationLogger.info("AI:\n\n{}\n{}", thoughts, thoughts.result.output)
-            conversationLogger.info("🛠️ agent has selected tools to use | [{}] {} | {}",
-                name, toolCalls.size, toolCalls.map { it.name })
-            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            conversationLogger.info("AI THOUGHTS:\n\n{}\n{}", thoughts, thoughts.result)
+            conversationLogger.info("Metadata: {}", thoughts.metadata)
+            conversationLogger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
+                toolCalls.map { it.name + " " + it.arguments })
+            conversationLogger.info("-----------------")
 
             reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
@@ -92,26 +98,6 @@ open class ToolCallAgent(
                 return doThinkWithRetry(retry + 1)
             }
             return false
-        }
-    }
-
-    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
-        val thoughts = response
-        val toolCalls = thoughts.result.output.toolCalls
-
-        if (verbose) {
-            logger.info("""😇 agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
-            logger.info("🛠️ agent has selected tools to use | [{}] {} | {}", name, toolCalls.size, toolCalls.map { it.name })
-
-            return
-        }
-
-        val answer = thoughts.result.output.text
-        if (!answer.isNullOrEmpty()) {
-            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
-        }
-        if (toolCalls.isNotEmpty()) {
-            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
         }
     }
 
@@ -129,17 +115,22 @@ open class ToolCallAgent(
 
         try {
             val toolCallResult = toolCallingManager.executeToolCalls(userPrompt, response0)
-            val index = toolCallResult.conversationHistory().size - 1
-            val responseMessage = toolCallResult.conversationHistory()[index] as ToolResponseMessage
+
+            val conversationHistory = toolCallResult.conversationHistory()
+
+            conversationLogger.info("TOOL CALL RESULT:\n\n{}\n", conversationHistory.joinToString("\n"))
+            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+
+            val responseMessage = conversationHistory.last() as ToolResponseMessage
             llmService.agentMemory.add(conversationId, responseMessage)
 
-            val llmCallResponse = responseMessage.responses[0].responseData()
-            results.add(llmCallResponse)
+            val llmCallResponse = responseMessage.responses.firstOrNull()
+                ?: throw IllegalStateException("No response found in ToolResponseMessage")
+
+            val responseData = llmCallResponse.responseData()
+            results.add(responseData)
 
             val responseText = results.joinToString("\n\n")
-
-            conversationLogger.info("AI:\n\n{}\n", results.joinToString("\n"))
-            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
             logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(responseText, 1000))
 
@@ -161,7 +152,24 @@ open class ToolCallAgent(
         Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
     )
 
-    companion object {
-        private const val REPLY_MAX = 3
+    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
+        val thoughts = response
+        val toolCalls = thoughts.result.output.toolCalls
+
+        if (verbose) {
+            logger.info("""😇 Agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
+            logger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
+                toolCalls.map { it.name + " " + it.arguments })
+
+            return
+        }
+
+        val answer = thoughts.result.output.text
+        if (!answer.isNullOrEmpty()) {
+            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
+        }
+        if (toolCalls.isNotEmpty()) {
+            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
+        }
     }
 }
