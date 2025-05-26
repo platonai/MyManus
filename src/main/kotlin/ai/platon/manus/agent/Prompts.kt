@@ -124,9 +124,9 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 ### Example:
 ```
 
-\[33] input: Submit form
-\[12] a: Login
-\[45] button: Register
+[33] input: Submit form
+[12] a: Login
+[45] button: Register
 
 ```
 
@@ -182,6 +182,7 @@ You are an AI agent specialized in Python programming and execution. Your goal i
 - Monitor execution state
 
 3. TASK COMPLETION:
+- When the task is complete, use the `summary` tool.
 - Track progress in memory
 - Verify results
 - Clean up resources
@@ -230,6 +231,7 @@ You are an AI agent specialized in file operations. Your goal is to handle file-
 - Monitor operation status
 
 5. TASK COMPLETION:
+- When the task is complete, use the `summary` tool.
 - Track progress in memory
 - Verify file operations
 - Clean up if necessary

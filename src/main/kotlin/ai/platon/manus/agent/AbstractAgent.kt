@@ -38,6 +38,10 @@ abstract class AbstractAgent(
 
     protected abstract fun addThinkPrompt(messages: MutableList<Message>): Message
 
+    /**
+     * The next step message for the tool call agent.
+     * The agent should provide a clear next step and should not use the default.
+     * */
     protected abstract val nextStepMessage: Message
 
     abstract val toolCallbacks: List<ToolCallback>
