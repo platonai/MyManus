@@ -18,6 +18,15 @@
             <fileNamePattern>logs/manus.log.%d{.yyyy-MM-dd}</fileNamePattern>
         </rollingPolicy>
     </appender>
+    <appender name="CONVERSATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>logs/conversation.log</File>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%.10thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/conversation.log.%d{.yyyy-MM-dd}</fileNamePattern>
+        </rollingPolicy>
+    </appender>
 
     <!-- 根日志记录器 -->
     <root level="INFO">
@@ -27,5 +36,9 @@
 
     <!-- 特定包的日志级别调整 -->
     <logger name="ai.platon.manus" level="INFO"/>
+
+    <logger name="ai.platon.manus.conversation" level="INFO" additivity="false">
+        <appender-ref ref="CONVERSATION"/>
+    </logger>
 
 </configuration>

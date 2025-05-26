@@ -16,8 +16,7 @@ class PythonAgent(
 ) : ToolCallAgent(llmService, toolCallingManager) {
     private var lastResult: String? = null
 
-    override val name: String
-        get() = PythonTool.NAME
+    override val name: String = "PYTHON_AGENT"
 
     override val description: String
         get() = """
@@ -41,11 +40,10 @@ Note:
         return result
     }
 
-    override val toolCallList: List<ToolCallback>
+    override val toolCallbacks: List<ToolCallback>
         get() = listOf<ToolCallback>(
-            PythonTool.functionToolCallback, Summary.getFunctionToolCallback(
-                this, llmService.memory, conversationId
-            )
+            PythonTool.functionToolCallback,
+            Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
         )
 
     override var data: Map<String, Any?>

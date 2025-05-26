@@ -1,7 +1,7 @@
 package ai.platon.manus.tool
 
 import ai.platon.manus.agent.AgentState
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import org.slf4j.Logger
@@ -11,7 +11,7 @@ import org.springframework.ai.tool.function.FunctionToolCallback
 import org.springframework.ai.tool.metadata.ToolMetadata
 
 class Summary(
-    private val agent: MyAgent,
+    private val agent: AbstractAgent,
     private val chatMemory: ChatMemory,
     private val conversationId: String
 ) : AbstractTool() {
@@ -38,15 +38,27 @@ class Summary(
 			}
 			""".trimIndent()
 
-        private const val name = "summary"
+        private const val NAME = "summary"
 
-        private const val description = "Record the summary of current step and terminate the current step"
+        private const val DESCRIPTION = """
+Terminate the current execution step with a comprehensive summary message.
+This message will be passed as the final output of the current step and should include:
+
+- Detailed execution results and status
+- All relevant facts and data collected
+- Key findings and observations
+- Important insights and conclusions
+- Any actionable recommendations
+
+The summary should be thorough enough to provide complete context for subsequent steps or other agents.
+
+        """
 
         fun getFunctionToolCallback(
-            agent: MyAgent, chatMemory: ChatMemory, conversationId: String
+            agent: AbstractAgent, chatMemory: ChatMemory, conversationId: String
         ): FunctionToolCallback<*, *> {
-            return FunctionToolCallback.builder(name, Summary(agent, chatMemory, conversationId))
-                .description(description)
+            return FunctionToolCallback.builder(NAME, Summary(agent, chatMemory, conversationId))
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .toolMetadata(ToolMetadata.builder().returnDirect(true).build()).build()

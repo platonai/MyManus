@@ -1,7 +1,7 @@
 package ai.platon.manus.agent.plan
 
 import ai.platon.manus.MyTestApplication
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import io.mockk.every
@@ -26,10 +26,10 @@ class PlanningFlowMockkTest {
     private lateinit var llmService: LlmService
 
     @MockK
-    private lateinit var agent1: MyAgent
+    private lateinit var agent1: AbstractAgent
 
     @MockK
-    private lateinit var agent2: MyAgent
+    private lateinit var agent2: AbstractAgent
 
     private lateinit var planningFlow: PlanningFlow
 
@@ -47,7 +47,7 @@ class PlanningFlowMockkTest {
     fun `test execute with empty input`() {
         val result = planningFlow.execute("")
         println(result)
-        assertTrue { result.isNotBlank() }
+        assertTrue { result.isBlank() }
     }
 
     @Test
@@ -62,7 +62,7 @@ class PlanningFlowMockkTest {
     @Test
     fun `test request initial plan`() {
         // clear tool call list, just temporary
-        planningFlow.tools.clear()
+        planningFlow.toolCallbacks.clear()
         val result = planningFlow.askForAnInitialPlan("How to create an AI agent that can create AI agents?")
         println(result)
         assertNotNull(result)
@@ -72,7 +72,7 @@ class PlanningFlowMockkTest {
 
     @Test
     fun `ensure valid tool calls`() {
-        val toolCalls = planningFlow.tools
+        val toolCalls = planningFlow.toolCallbacks
         toolCalls.forEach {
             val name = it.toolDefinition.name()
             val description = it.toolDefinition.description()
@@ -91,7 +91,7 @@ class PlanningFlowMockkTest {
 
     @Test
     fun `test convert toolInput to json`() {
-        val toolCall = planningFlow.tools[0]
+        val toolCall = planningFlow.toolCallbacks[0]
         // val toolInput = toolCall.toolDefinition.inputSchema()
         var toolInput = """{"a": "b"}"""
         var toolInputType = Map::class.java
@@ -116,7 +116,7 @@ class PlanningFlowMockkTest {
     @Test
     fun `test request initial plan with tool calls`() {
         // clear tool call list, just temporary
-        val toolCall = planningFlow.tools[0]
+        val toolCall = planningFlow.toolCallbacks[0]
         val result = planningFlow.askForAnInitialPlan("Create an AI agent that can create AI agents")
         println(result)
         assertNotNull(result)

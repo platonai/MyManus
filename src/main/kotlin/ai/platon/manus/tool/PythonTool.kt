@@ -33,7 +33,7 @@ class PythonTool : AbstractTool() {
 			
 			""".trimIndent()
 
-        const val NAME = "PYTHON_EXECUTE"
+        const val NAME = "python_execute"
 
         val DESCRIPTION = """
 ### Execute Python Code

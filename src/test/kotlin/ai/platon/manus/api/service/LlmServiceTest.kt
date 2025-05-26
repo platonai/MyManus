@@ -16,7 +16,7 @@ class LlmServiceTest {
     @Test
     fun testChatClient() {
         val inputText = "What is the capital of France?"
-        val outputText = llmService.chatClient.prompt(inputText).call().content()
+        val outputText = llmService.agentClient.prompt(inputText).call().content()
         println(outputText)
 
         assertNotNull(outputText)

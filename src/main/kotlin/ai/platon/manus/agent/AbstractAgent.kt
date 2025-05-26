@@ -6,19 +6,18 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.messages.AssistantMessage
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.tool.ToolCallback
-import java.util.concurrent.locks.ReentrantLock
 
 enum class AgentState(private val state: String) {
     IDLE("IDLE"), RUNNING("RUNNING"), FINISHED("FINISHED"), ERROR("ERROR");
     override fun toString() = state
 }
 
-abstract class MyAgent(
+abstract class AbstractAgent(
     protected var llmService: LlmService
 ): AutoCloseable {
-    private val logger: Logger = LoggerFactory.getLogger(MyAgent::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(AbstractAgent::class.java)
 
-    private val lock = ReentrantLock()
+    protected val conversationLogger = LoggerFactory.getLogger("ai.platon.manus.conversation")
 
     var conversationId: String = ""
 
@@ -39,9 +38,13 @@ abstract class MyAgent(
 
     protected abstract fun addThinkPrompt(messages: MutableList<Message>): Message
 
+    /**
+     * The next step message for the tool call agent.
+     * The agent should provide a clear next step and should not use the default.
+     * */
     protected abstract val nextStepMessage: Message
 
-    abstract val toolCallList: List<ToolCallback>
+    abstract val toolCallbacks: List<ToolCallback>
 
     /**
      * Run the agent with the given data. Returns the information of each step.
@@ -111,8 +114,8 @@ one necessary tool call to proceed with the task.
 
     private fun isHung(): Boolean {
         // take the last 10 round messages
-        val count = llmService.memory.get(conversationId, 10)
-            .filterIsInstance<AssistantMessage>().count { it.toolCalls.isNullOrEmpty() }
+        val count = llmService.agentMemory.get(conversationId)
+            .filterIsInstance<AssistantMessage>().count { it.toolCalls.isEmpty() }
         return count >= 3
     }
 }

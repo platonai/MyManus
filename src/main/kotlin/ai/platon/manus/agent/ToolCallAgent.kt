@@ -8,8 +8,9 @@ import ai.platon.manus.tool.Summary
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY
+import org.springframework.ai.chat.client.DefaultChatClient
+import org.springframework.ai.chat.client.DefaultChatClient.DefaultCallResponseSpec
+import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.ToolResponseMessage
 import org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse
@@ -23,7 +24,7 @@ import org.springframework.ai.tool.ToolCallback
 
 open class ToolCallAgent(
     llmService: LlmService, private val toolCallingManager: ToolCallingManager
-) : ThinkAndActAgent(llmService) {
+) : ReActAgent(llmService) {
     private val logger: Logger = LoggerFactory.getLogger(ToolCallAgent::class.java)
 
     private var response: ChatResponse? = null
@@ -49,7 +50,7 @@ open class ToolCallAgent(
 
     private fun doThinkWithRetry(retry: Int): Boolean {
         try {
-            val messages: MutableList<Message> = ArrayList()
+            val messages = mutableListOf<Message>()
             addThinkPrompt(messages)
 
             val chatOptions = ToolCallingChatOptions.builder().internalToolExecutionEnabled(false).build()
@@ -58,27 +59,20 @@ open class ToolCallAgent(
 
             userPrompt = Prompt(messages, chatOptions)
 
-            response = llmService.chatClient.prompt(userPrompt).advisors {
-                it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                    .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100) }
-                .tools(toolCallList)
-                .call()
-                .chatResponse()
-
-            val response0 = response ?: return false
-            val toolCalls = response0.result.output.toolCalls
-
-            logger.info("""😇 {}'s thoughts: 🗯{}🗯""", name, response0.result.output)
-            logger.info("🛠️ {} selected {} tools to use | {}", name, toolCalls.size, toolCalls.map { it.name })
-
-            val answer = response0.result.output.text
-            if (answer != null && answer.isNotEmpty()) {
-                logger.info("""✨ {}'s response: 🗯{}🗯""", name, answer)
+            val request = llmService.agentClient.prompt(userPrompt)
+                .advisors { it.param(CONVERSATION_ID, conversationId) }
+                .toolCallbacks(toolCallbacks)
+            if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
+                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}", request.systemText, request.userText)
             }
 
-            if (toolCalls.isNotEmpty()) {
-                logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
-            }
+            response = request.call().chatResponse()
+
+            val thoughts = response ?: return false
+            val toolCalls = thoughts.result.output.toolCalls
+
+            conversationLogger.info("\n\nAI:\n{}", thoughts)
+            reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
             return toolCalls.isNotEmpty()
         } catch (e: Exception) {
@@ -91,16 +85,41 @@ open class ToolCallAgent(
         }
     }
 
+    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
+        val thoughts = response
+        val toolCalls = thoughts.result.output.toolCalls
+
+        if (verbose) {
+            logger.info("""😇 agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
+            logger.info("🛠️ agent has selected tools to use | [{}] {} | {}", name, toolCalls.size, toolCalls.map { it.name })
+
+            return
+        }
+
+        val answer = thoughts.result.output.text
+        if (!answer.isNullOrEmpty()) {
+            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
+        }
+        if (toolCalls.isNotEmpty()) {
+            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
+        }
+    }
+
     override fun act(): String {
-        val response0 = response ?: return "Illegal state: null response"
+        val response0 = requireNotNull(response)
 
         try {
             val results: MutableList<String> = ArrayList()
 
+            val toolCalls = response!!.result.output.toolCalls
+            val toolCall = toolCalls[0]
+
+            logger.info("🔧 Tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
+
             val result = toolCallingManager.executeToolCalls(userPrompt, response0)
             val index = result.conversationHistory().size - 1
             val responseMessage = result.conversationHistory()[index] as ToolResponseMessage
-            llmService.memory.add(conversationId, responseMessage)
+            llmService.agentMemory.add(conversationId, responseMessage)
 
             val llmCallResponse = responseMessage.responses[0].responseData()
 
@@ -113,18 +132,18 @@ open class ToolCallAgent(
             val toolCall = response0.result.output.toolCalls[0]
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
-            llmService.memory.add(conversationId, responseMessage)
+            llmService.agentMemory.add(conversationId, responseMessage)
 
             logger.warn("""Act failed 😔 | {}""", e.message)
             return String.format("""Act failed 😔 | %s""", e.message)
         }
     }
 
-    override val toolCallList = listOf<ToolCallback>(
+    override val toolCallbacks = listOf<ToolCallback>(
         GoogleSearch.functionToolCallback,
         FileSaver.functionToolCallback,
         PythonTool.functionToolCallback,
-        Summary.getFunctionToolCallback(this, llmService.memory, conversationId)
+        Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
     )
 
     companion object {

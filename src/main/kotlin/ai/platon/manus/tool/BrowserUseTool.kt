@@ -23,6 +23,19 @@ import kotlin.math.abs
 class BrowserUseTool() : AbstractTool() {
     private val closed = AtomicBoolean()
 
+    val browser get() = BROWSER
+
+    /**
+     * The ordered drivers, each driver is associated with a tab.
+     * */
+    val drivers get() = driver.browser.drivers.values
+        .filterIsInstance<AbstractWebDriver>()
+        .filter { it.isActive }
+        .sortedBy { it.id }
+
+    /**
+     * The current active driver.
+     * */
     val driver: PulsarWebDriver get() = ACTIVE_DRIVER as PulsarWebDriver
 
     @get:Synchronized
@@ -43,6 +56,7 @@ class BrowserUseTool() : AbstractTool() {
         val action = args[PARAM_ACTION] as? String? ?: return ToolExecuteResult("Action parameter is required")
         val url = args[PARAM_URL]?.toString()
         val index = AnyNumberConvertor(args[PARAM_INDEX]).toIntOrNull() ?: -1
+        val vi = AnyNumberConvertor(args[PARAM_VI]).toString()
         val text = args[PARAM_TEXT]?.toString()
         val script = args[PARAM_SCRIPT]?.toString()
         val scrollAmount = AnyNumberConvertor(args[PARAM_SCROLL_AMOUNT]).toIntOrNull()
@@ -57,7 +71,7 @@ class BrowserUseTool() : AbstractTool() {
 
                     driver.navigateTo(url)
                     driver.waitForLoadState("NETWORKIDLE")
-                    driver.delay(3000)
+                    
                     return ToolExecuteResult("Navigated to $url")
                 }
 
@@ -69,7 +83,7 @@ class BrowserUseTool() : AbstractTool() {
                     val interactiveElements = getInteractiveElements()
                     driver.click(interactiveElements[index])
                     driver.waitForLoadState("NETWORKIDLE")
-                    driver.delay(3000)
+
                     return ToolExecuteResult("Clicked element at #$index")
                 }
 
@@ -91,7 +105,7 @@ class BrowserUseTool() : AbstractTool() {
                     val interactiveElements = getInteractiveElements()
                     driver.press(interactiveElements[index], "Enter")
                     driver.waitForLoadState("NETWORKIDLE")
-                    driver.delay(3000)
+                    
                     return ToolExecuteResult("Hit the enter key at #$index")
                 }
 
@@ -145,10 +159,9 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("URL is required | $ACTION_NEW_TAB")
                     }
 
-                    val newDriver = driver.browser.newDriver()
+                    val newDriver = browser.newDriver()
                     newDriver.navigateTo(url)
                     driver.waitForLoadState("NETWORKIDLE")
-                    driver.delay(1000)
                     return ToolExecuteResult("Opened new tab | $url")
                 }
 
@@ -162,10 +175,6 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("Tab ID is required | $ACTION_SWITCH_TAB")
                     }
 
-                    val drivers = driver.browser.drivers.values
-                        .filterIsInstance<AbstractWebDriver>()
-                        .filter { it.isActive }
-                        .sortedBy { it.id }
                     ACTIVE_DRIVER = drivers[tabId]
                     return ToolExecuteResult("Switched to tab | $tabId")
                 }
@@ -173,10 +182,8 @@ class BrowserUseTool() : AbstractTool() {
                 ACTION_REFRESH -> {
                     driver.reload()
                     driver.waitForLoadState("NETWORKIDLE")
-                    driver.delay(3000)
                     return ToolExecuteResult("Page refreshed")
                 }
-
                 else -> return ToolExecuteResult("Unknown action | $action")
             }
         } catch (e: Exception) {
@@ -215,7 +222,6 @@ class BrowserUseTool() : AbstractTool() {
         state[STATE_TITLE] = title
 
         // Tab information
-        val drivers = driver.browser.drivers.values.sortedBy { it.id }
         val tabs: List<Map<String, Any?>> = drivers.mapIndexed { i, it ->
             mapOf(
                 STATE_URL to it.url(),
@@ -270,19 +276,21 @@ class BrowserUseTool() : AbstractTool() {
 
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(BrowserUseTool::class.java)
+
         private const val MAX_LENGTH = 20000
 
         var BROWSER = DefaultBrowserFactory().launchDefaultBrowser()
 
         var ACTIVE_DRIVER: WebDriver = BROWSER.newDriver()
 
-        private val name = "browser_use"
+        private const val NAME = "browser_use"
 
-        private val description = BROWSER_USE_TOOL_DESCRIPTION.trimIndent()
+        private const val DESCRIPTION = BROWSER_USE_TOOL_DESCRIPTION
 
         private val PARAMETERS = BROWSER_USE_TOOL_PARAMETERS.trimIndent()
 
         init {
+            // Enable Single Page Application (SPA) mode
             PulsarSettings().withSPA()
         }
 
@@ -293,8 +301,8 @@ class BrowserUseTool() : AbstractTool() {
         val INSTANCE: BrowserUseTool by lazy { BrowserUseTool() }
 
         fun getFunctionToolCallback(): FunctionToolCallback<*, *> {
-            return FunctionToolCallback.builder(name, INSTANCE)
-                .description(description)
+            return FunctionToolCallback.builder(NAME, INSTANCE)
+                .description(DESCRIPTION)
                 .inputSchema(PARAMETERS)
                 .inputType(Map::class.java)
                 .build()

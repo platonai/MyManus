@@ -50,14 +50,11 @@ class BrowserAgent(
         return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
-    override val toolCallList: List<ToolCallback> = listOf(
-        GoogleSearch.functionToolCallback,
-        FileSaver.functionToolCallback,
-        PythonTool.functionToolCallback,
+    override val toolCallbacks: List<ToolCallback> = listOf(
         BrowserUseTool.getFunctionToolCallback(),
         Summary.getFunctionToolCallback(
             this,
-            llmService.memory,
+            llmService.agentMemory,
             conversationId
         )
     )

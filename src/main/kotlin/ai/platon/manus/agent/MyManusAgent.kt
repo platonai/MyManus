@@ -19,7 +19,7 @@ class MyManusAgent(
 
     override val description = "A faithful agent that can solve various tasks using multiple tools"
 
-    override val toolCallList: List<ToolCallback> = prepareToolCallList()
+    override val toolCallbacks: List<ToolCallback> = prepareToolCallList()
 
     private fun prepareToolCallList(): List<ToolCallback> {
         val tools = listOf(
@@ -27,7 +27,7 @@ class MyManusAgent(
             FileSaver.functionToolCallback,
             PythonTool.functionToolCallback,
             BrowserUseTool.getFunctionToolCallback(),
-            Summary.getFunctionToolCallback(this, llmService.memory, conversationId)
+            Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
         )
 
         val moreTools = when {

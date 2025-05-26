@@ -1,15 +1,17 @@
 package ai.platon.manus.agent.plan
 
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
+import ai.platon.manus.agent.FINALIZE_PLAN_PROMPT
+import ai.platon.manus.agent.INITIAL_PLAN_PROMPT
 import ai.platon.manus.agent.MyManusAgent
 import ai.platon.manus.api.service.LlmService
 import ai.platon.manus.tool.PlanningTool
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.alwaysTrue
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.warnInterruptible
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY
-import org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor
 import org.springframework.ai.chat.model.ChatResponse
 import org.springframework.ai.chat.prompt.PromptTemplate
@@ -19,32 +21,31 @@ import java.util.regex.Pattern
 
 class PlanningFlow(
     var llmService: LlmService,
-    agents: List<MyAgent>,
+    agents: List<AbstractAgent>,
     data: MutableMap<String, Any> = mutableMapOf(),
 ) : FlowBase(agents, data) {
     private val logger = LoggerFactory.getLogger(PlanningFlow::class.java)
+    protected val conversationLogger = LoggerFactory.getLogger("ai.platon.manus.conversation")
+
     private var planningTool: PlanningTool
     private var executorKeys: MutableList<String> = mutableListOf()
     private val finishedPlans = mutableSetOf<String>()
 
-    var conversationId: String
+    var planId: String
         private set
 
     private var currentStepIndex: Int = -1
 
-    override val tools: MutableList<ToolCallback> = mutableListOf(PlanningTool.functionToolCallback)
+    override val toolCallbacks: MutableList<ToolCallback> = mutableListOf(PlanningTool.functionToolCallback)
 
-    val currentPlanContent: String get() = getCurrentPlanContent(conversationId)
+    val currentPlanContent: String get() = getCurrentPlanContent(planId)
 
     init {
-        if (data.containsKey("executors")) {
-            this.executorKeys = data.remove("executors") as MutableList<String>
-        }
         if (executorKeys.isEmpty()) {
-            agents.map { it.name.uppercase(Locale.getDefault()) }.toCollection(executorKeys)
+            agents.map { it.name.uppercase() }.toCollection(executorKeys)
         }
 
-        conversationId = if (data.containsKey("plan_id")) {
+        planId = if (data.containsKey("plan_id")) {
             data.remove("plan_id") as String
         } else {
             "plan_" + System.currentTimeMillis()
@@ -53,15 +54,26 @@ class PlanningFlow(
         this.planningTool = data.computeIfAbsent("planning_tool") { PlanningTool.INSTANCE } as PlanningTool
     }
 
-    constructor(llmService: LlmService, vararg agents: MyAgent): this(llmService, agents.toList())
+    constructor(llmService: LlmService, vararg agents: AbstractAgent): this(llmService, agents.toList())
 
     fun newPlan(planID: String) {
-        this.conversationId = planID
+        this.planId = planID
     }
 
     override fun execute(inputText: String): String {
+        if (inputText.isBlank()) {
+            return ""
+        }
+
+        createInitialPlan(inputText)
+
+        if (!planningTool.hasPlan(planId)) {
+            val message = "Failed to create a plan. Plan not found | #$planId | $inputText"
+            return message.also { logger.warn(it) }
+        }
+
         return try {
-            executeStepByStep(inputText)
+            executeStepByStep()
         } catch (e: Exception) {
             val message = "Failed to execute the planning flow | " + e.message
             message.also { warnInterruptible(this, e, it) }
@@ -69,25 +81,16 @@ class PlanningFlow(
         }
     }
 
-    private fun executeStepByStep(inputText: String): String {
-        if (inputText.isNotEmpty()) {
-            createInitialPlan(inputText)
-
-            if (!planningTool.hasPlan(conversationId)) {
-                val message = "Failed to create a plan. Plan not found | #$conversationId | $inputText"
-                return message.also { logger.warn(it) }
-            }
-        }
-
+    private fun executeStepByStep(): String {
         val result = StringBuilder()
         while (true) {
             val info = currentStepInfo()
             if (info == null) {
-                if (planningTool.hasPlan(conversationId)) {
-                    logger.info("Plan not found | {}", conversationId)
-                    result.append(finalizeConversation(conversationId))
+                if (planningTool.hasPlan(planId)) {
+                    logger.info("Plan not found | {}", planId)
+                    result.append(finalizeConversation(planId))
                 } else {
-                    logger.info("Plan is already finished | {}", conversationId)
+                    logger.info("Plan is already finished | {}", planId)
                 }
                 break
             }
@@ -97,7 +100,7 @@ class PlanningFlow(
 
             val stepType = stepInfo["type"]
             val executor = chooseBestAgent(stepType)
-            executor.conversationId = conversationId
+            executor.conversationId = planId
 
             val stepResult = executeStep(executor, stepInfo)
             result.append(stepResult).append("\n")
@@ -111,7 +114,7 @@ class PlanningFlow(
             val brief = request.replace("\\s+".toRegex(), " ")
                 .replace("\\p{Cntrl}".toRegex(), " ")
                 .let { StringUtils.abbreviate(it, 0, 80) }
-            logger.info("Asking a initial plan | #{} | {}", conversationId, brief)
+            logger.info("Asking a initial plan | #{} | {}", planId, brief)
         }
 
         logger.info("Available agents: {}", agents.joinToString { it.name })
@@ -120,25 +123,27 @@ class PlanningFlow(
             "- Agent name: ${it.name} description: ${it.description}"
         }
         val params = mapOf(
-            "plan_id" to conversationId,
+            "plan_id" to planId,
             "query" to request,
             "agents_info" to agentsInfo
         )
 
-        val userPrompt = PromptTemplate(INITIAL_PLAN_PROMPT).create(params)
-
+        val prompt = PromptTemplate(INITIAL_PLAN_PROMPT).create(params)
         val llmRequest = llmService.planningChatClient
-            .prompt(userPrompt)
-            .tools(tools)
-            .advisors {
-                it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                    .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)
-            }
+            .prompt(prompt)
+            .toolCallbacks(toolCallbacks)
             .user(request)
+        // conversationLogger.info("\n\n-------------------\nMyManus:\n{}", llmRequest.messages)
+
+        val useMemory = alwaysTrue()
+        if (useMemory) {
+            llmRequest.advisors(MessageChatMemoryAdvisor.builder(llmService.conversationMemory).build())
+        }
 
         val llmResponse = llmRequest.call()
 
         val response = llmResponse.chatResponse()
+        conversationLogger.info("\n\nAI:\n{}", prettyPulsarObjectMapper().writeValueAsString(response))
 
         return response
     }
@@ -147,9 +152,9 @@ class PlanningFlow(
         val response = askForAnInitialPlan(request)
 
         // Notice: use `currentPlanContent` to see the content of AI's response
-        // TODO: why the response can be null?
-        if (response != null && response.result != null) {
-            val plan = response.result.output.text.replace("\\n+".toRegex(), "\\n")
+        val outputText = response?.result?.output?.text
+        if (outputText != null) {
+            val plan = outputText.replace("\\n+".toRegex(), "\\n")
             logger.info("Plan: $plan")
             return
         }
@@ -164,14 +169,14 @@ class PlanningFlow(
 
         return mapOf<String, Any?>(
             "command" to "create",
-            "plan_id" to conversationId,
+            "plan_id" to planId,
             "title" to StringUtils.abbreviate("Plan for: $request", 100),
             "steps" to mutableListOf("Analyze request", "Execute task", "Verify results")
         )
     }
 
     private fun currentStepInfo(): Pair<Int, Map<String, String>>? {
-        val planData = planningTool.plans[conversationId] ?: return null
+        val planData = planningTool.plans[planId] ?: return null
 
         try {
             val steps = planData.getOrDefault("steps", ArrayList<String>()) as List<String>
@@ -197,7 +202,7 @@ class PlanningFlow(
                     try {
                         val args = mapOf(
                             "command" to "mark_step",
-                            "plan_id" to conversationId,
+                            "plan_id" to planId,
                             "step_index" to i,
                             "step_status" to StepStatus.IN_PROGRESS.value
                         )
@@ -226,7 +231,7 @@ class PlanningFlow(
         }
     }
 
-    internal fun executeStep(agent: MyAgent, stepInfo: Map<String, String>): String {
+    internal fun executeStep(agent: AbstractAgent, stepInfo: Map<String, String>): String {
         try {
             val planStatus = currentPlanContent
             val stepText = stepInfo["text"] ?: "Step $currentStepIndex"
@@ -265,19 +270,19 @@ class PlanningFlow(
         try {
             val args = mapOf(
                 "command" to "mark_step",
-                "plan_id" to conversationId,
+                "plan_id" to planId,
                 "step_index" to currentStepIndex,
                 "step_status" to StepStatus.COMPLETED.value
             )
             val result = planningTool.run(args)
-            logger.info("Marked plan step as completed | $currentStepIndex | $conversationId")
+            logger.info("Marked plan step as completed | $currentStepIndex | $planId")
 
             return result
         } catch (e: Exception) {
             logger.warn("Failed to update plan status: " + e.message)
 
             val plans = planningTool.plans
-            val planData = plans[conversationId] ?: return null
+            val planData = plans[planId] ?: return null
 
             val stepStatuses = planData.getOrDefault("step_statuses", ArrayList<String>()) as MutableList<String>
 
@@ -292,7 +297,7 @@ class PlanningFlow(
         return null
     }
 
-    internal fun chooseBestAgent(stepType: String?): MyAgent {
+    internal fun chooseBestAgent(stepType: String?): AbstractAgent {
         val agent = agents.firstOrNull { it.name.equals(stepType, ignoreCase = true) }
         if (agent != null) {
             return agent
@@ -304,7 +309,7 @@ class PlanningFlow(
         }
 
         backup = agents.firstOrNull()
-        check(backup is MyAgent) { "No agents available in the system" }
+        check(backup is AbstractAgent) { "No agents available in the system" }
         logger.warn("Pick the first agent as default | {}", backup.name)
 
         return backup
@@ -313,11 +318,11 @@ class PlanningFlow(
     private fun generatePlanTextFromStorage(): String {
         try {
             val plans = planningTool.plans
-            if (!plans.containsKey(conversationId)) {
-                return "Error: Plan with ID $conversationId not found"
+            if (!plans.containsKey(planId)) {
+                return "Error: Plan with ID $planId not found"
             }
 
-            val planData = plans[conversationId]!!
+            val planData = plans[planId]!!
             val title = planData.getOrDefault("title", "Untitled Plan") as String
             val steps = planData.getOrDefault("steps", ArrayList<String>()) as List<String>
             val stepStatuses = planData.getOrDefault("step_statuses", ArrayList<String>()) as MutableList<String>
@@ -344,7 +349,7 @@ class PlanningFlow(
             val progress = if (total > 0) (completed / total.toDouble()) * 100 else 0.0
 
             val planText = StringBuilder()
-            planText.append("Plan: ").append(title).append(" (ID: ").append(conversationId).append(")\n")
+            planText.append("Plan: ").append(title).append(" (ID: ").append(planId).append(")\n")
 
             for (i in 0..<planText.length - 1) {
                 planText.append("=")
@@ -383,16 +388,16 @@ class PlanningFlow(
             return planText.toString()
         } catch (e: Exception) {
             logger.warn("Error generating plan text from storage: " + e.message)
-            return "Error: Unable to retrieve plan with ID $conversationId"
+            return "Error: Unable to retrieve plan with ID $planId"
         }
     }
 
     internal fun requestFinalizePlan(prompt: String): ChatResponse? {
         return llmService.finalizeChatClient
             .prompt()
-            .advisors(MessageChatMemoryAdvisor(llmService.memory))
-            .advisors { it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)}
+//            .advisors(MessageChatMemoryAdvisor(llmService.memory))
+//            .advisors { it.param(CHAT_MEMORY_CONVERSATION_ID_KEY, planId)
+//                .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 100)}
             .user(prompt)
             .call()
             .chatResponse()

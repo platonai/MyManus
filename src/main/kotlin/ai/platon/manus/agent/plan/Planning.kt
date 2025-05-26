@@ -1,6 +1,6 @@
 package ai.platon.manus.agent.plan
 
-import ai.platon.manus.agent.MyAgent
+import ai.platon.manus.agent.AbstractAgent
 import org.springframework.ai.tool.ToolCallback
 
 enum class StepStatus(
@@ -29,7 +29,7 @@ enum class StepStatus(
 }
 
 abstract class FlowBase(
-    var agents: List<MyAgent>,
+    var agents: List<AbstractAgent>,
     val data: MutableMap<String, Any>
 ) {
     init {
@@ -38,5 +38,5 @@ abstract class FlowBase(
 
     abstract fun execute(inputText: String): String
 
-    abstract val tools: List<ToolCallback>
+    abstract val toolCallbacks: List<ToolCallback>
 }
