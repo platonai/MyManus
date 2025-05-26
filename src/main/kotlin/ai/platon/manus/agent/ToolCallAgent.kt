@@ -61,8 +61,15 @@ open class ToolCallAgent(
             val request = llmService.agentClient.prompt(userPrompt)
                 .advisors { it.param(CONVERSATION_ID, conversationId) }
                 .toolCallbacks(toolCallbacks)
+
             if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
-                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}", request.systemText, request.userText)
+//                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}\n{}",
+//                    request.messages.joinToString("\n"), data,
+//                    request.messages.joinToString("\n") { it.text })
+
+                val requestText = request.messages.joinToString("\n") { it.text }
+                conversationLogger.info("===========================================================================" +
+                        "\nMyManus:\n\n{}\n\n\n", requestText)
             }
 
             response = request.call().chatResponse()
@@ -70,7 +77,11 @@ open class ToolCallAgent(
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-            conversationLogger.info("\n\nAI:\n{}", thoughts)
+            conversationLogger.info("AI:\n\n{}\n{}", thoughts, thoughts.result.output)
+            conversationLogger.info("🛠️ agent has selected tools to use | [{}] {} | {}",
+                name, toolCalls.size, toolCalls.map { it.name })
+            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+
             reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
             return toolCalls.isNotEmpty()
@@ -106,29 +117,34 @@ open class ToolCallAgent(
 
     override fun act(): String {
         val response0 = requireNotNull(response)
+        val results: MutableList<String> = ArrayList()
+        val toolCalls = response0.result.output.toolCalls
+        if (toolCalls.isEmpty()) {
+            logger.warn("No tool calls found in response | {} | {}", name, response0.result.output)
+            return "No tool calls found in response"
+        }
+
+        val toolCall = toolCalls[0]
+        logger.info("🔧 Performing tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
 
         try {
-            val results: MutableList<String> = ArrayList()
-
-            val toolCalls = response!!.result.output.toolCalls
-            val toolCall = toolCalls[0]
-
-            logger.info("🔧 Tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
-
-            val result = toolCallingManager.executeToolCalls(userPrompt, response0)
-            val index = result.conversationHistory().size - 1
-            val responseMessage = result.conversationHistory()[index] as ToolResponseMessage
+            val toolCallResult = toolCallingManager.executeToolCalls(userPrompt, response0)
+            val index = toolCallResult.conversationHistory().size - 1
+            val responseMessage = toolCallResult.conversationHistory()[index] as ToolResponseMessage
             llmService.agentMemory.add(conversationId, responseMessage)
 
             val llmCallResponse = responseMessage.responses[0].responseData()
-
             results.add(llmCallResponse)
 
-            logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(llmCallResponse, 1000))
+            val responseText = results.joinToString("\n\n")
 
-            return results.joinToString("\n\n")
+            conversationLogger.info("AI:\n\n{}\n", results.joinToString("\n"))
+            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+
+            logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(responseText, 1000))
+
+            return responseText
         } catch (e: Exception) {
-            val toolCall = response0.result.output.toolCalls[0]
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
             llmService.agentMemory.add(conversationId, responseMessage)

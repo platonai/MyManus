@@ -13,11 +13,6 @@ const val PLACEHOLDER_CONTENT_BELOW = "content_below_placeholder"
 const val PLACEHOLDER_INTERACTIVE_ELEMENTS = "interactive_elements"
 const val PLACEHOLDER_RESULTS = "results_placeholder"
 
-// Format strings
-const val FORMAT_URL_INFO = "\n   URL: %s\n   Title: %s"
-const val FORMAT_TABS_INFO = "\n   %d tab(s) available"
-const val FORMAT_SCROLL_INFO = " (%d pixels)"
-
 // Browser use tool
 const val BROWSER_INTERACTIVE_ELEMENTS_SELECTOR = "a, button, input, select, textarea, " +
         "[role='button'], [role='link'], [onclick], [onmousedown], [onmouseup]"

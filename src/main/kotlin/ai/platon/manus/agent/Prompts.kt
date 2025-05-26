@@ -1,5 +1,8 @@
 package ai.platon.manus.agent
 
+import ai.platon.manus.common.PLACEHOLDER_INTERACTIVE_ELEMENTS
+import ai.platon.manus.common.PLACEHOLDER_TABS
+import ai.platon.manus.common.PLACEHOLDER_URL
 import ai.platon.manus.tool.ACTION_GET_HTML
 import ai.platon.manus.tool.ACTION_GET_TEXT
 
@@ -109,6 +112,18 @@ the guidelines provided.
 
 const val BROWSER_AGENT_SYSTEM_PROMPT = """
 You are an AI agent designed to automate browser tasks.
+
+# Input Format
+
+Current URL:
+{$PLACEHOLDER_URL}
+
+Open Tabs:
+{$PLACEHOLDER_TABS}
+
+Interactive Elements:
+{$PLACEHOLDER_INTERACTIVE_ELEMENTS}
+
 """
 
 const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
