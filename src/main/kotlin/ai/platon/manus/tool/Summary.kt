@@ -40,7 +40,19 @@ class Summary(
 
         private const val NAME = "summary"
 
-        private const val DESCRIPTION = "Record the summary of current step and terminate the current step"
+        private const val DESCRIPTION = """
+Terminate the current execution step with a comprehensive summary message.
+This message will be passed as the final output of the current step and should include:
+
+- Detailed execution results and status
+- All relevant facts and data collected
+- Key findings and observations
+- Important insights and conclusions
+- Any actionable recommendations
+
+The summary should be thorough enough to provide complete context for subsequent steps or other agents.
+
+        """
 
         fun getFunctionToolCallback(
             agent: AbstractAgent, chatMemory: ChatMemory, conversationId: String

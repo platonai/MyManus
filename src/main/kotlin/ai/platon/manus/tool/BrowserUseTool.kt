@@ -56,6 +56,7 @@ class BrowserUseTool() : AbstractTool() {
         val action = args[PARAM_ACTION] as? String? ?: return ToolExecuteResult("Action parameter is required")
         val url = args[PARAM_URL]?.toString()
         val index = AnyNumberConvertor(args[PARAM_INDEX]).toIntOrNull() ?: -1
+        val vi = AnyNumberConvertor(args[PARAM_VI]).toString()
         val text = args[PARAM_TEXT]?.toString()
         val script = args[PARAM_SCRIPT]?.toString()
         val scrollAmount = AnyNumberConvertor(args[PARAM_SCROLL_AMOUNT]).toIntOrNull()
@@ -181,10 +182,8 @@ class BrowserUseTool() : AbstractTool() {
                 ACTION_REFRESH -> {
                     driver.reload()
                     driver.waitForLoadState("NETWORKIDLE")
-                    
                     return ToolExecuteResult("Page refreshed")
                 }
-
                 else -> return ToolExecuteResult("Unknown action | $action")
             }
         } catch (e: Exception) {
