@@ -37,8 +37,8 @@ A file system agent capable of performing read/write operations across multiple 
         return result
     }
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        super.addThinkPrompt(messages)
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        super.addThinkPromptTo(messages)
         return SystemPromptTemplate(FILE_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 

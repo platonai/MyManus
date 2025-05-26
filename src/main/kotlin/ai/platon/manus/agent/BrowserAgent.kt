@@ -45,8 +45,8 @@ class BrowserAgent(
         return super.think()
     }
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        super.addThinkPrompt(messages)
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        super.addThinkPromptTo(messages)
         return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 

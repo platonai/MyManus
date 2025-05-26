@@ -57,7 +57,7 @@ Provide a clear and concise response addressing:
 Format your response in a user-friendly way.
 """
 
-const val TOOL_CALL_AGENT_STEP_PROMPT = """
+const val TOOL_CALL_AGENT_SYSTEM_PROMPT = """
 CURRENT PLAN STATUS:
 {planStatus}
 
@@ -107,7 +107,6 @@ the guidelines provided.
  * BROWSER AGENT
  * ***********************************************************************/
 
-// System prompt for the browser agent, it should keep the same with browser-agent-system-prompt.md
 const val BROWSER_AGENT_SYSTEM_PROMPT = """
 You are an AI agent designed to automate browser tasks.
 """

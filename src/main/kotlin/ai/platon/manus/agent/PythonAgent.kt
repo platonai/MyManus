@@ -29,8 +29,8 @@ Note:
     override val nextStepMessage: Message
         get() = PromptTemplate(PYTHON_AGENT_NEXT_STEP_PROMPT).createMessage(data)
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        super.addThinkPrompt(messages)
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        super.addThinkPromptTo(messages)
         return SystemPromptTemplate(PYTHON_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 

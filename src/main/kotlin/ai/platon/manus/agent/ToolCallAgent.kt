@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.DefaultChatClient
-import org.springframework.ai.chat.client.DefaultChatClient.DefaultCallResponseSpec
 import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.ToolResponseMessage
@@ -40,10 +39,10 @@ open class ToolCallAgent(
         return doThinkWithRetry(retry)
     }
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        // super class' behavior, doing nothing in this case
-        super.addThinkPrompt(messages)
-        return SystemPromptTemplate(TOOL_CALL_AGENT_STEP_PROMPT).createMessage(data).also { messages.add(it) }
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        // super class' behavior, doing nothing in ToolCallAgent
+        super.addThinkPromptTo(messages)
+        return SystemPromptTemplate(TOOL_CALL_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
     override val nextStepMessage: Message get() = UserMessage(TOOL_CALL_AGENT_NEXT_STEP_PROMPT)
@@ -51,7 +50,7 @@ open class ToolCallAgent(
     private fun doThinkWithRetry(retry: Int): Boolean {
         try {
             val messages = mutableListOf<Message>()
-            addThinkPrompt(messages)
+            addThinkPromptTo(messages)
 
             val chatOptions = ToolCallingChatOptions.builder().internalToolExecutionEnabled(false).build()
             val nextStepMessage = nextStepMessage

@@ -36,7 +36,7 @@ abstract class AbstractAgent(
 
     open var data: Map<String, Any?> = HashMap()
 
-    protected abstract fun addThinkPrompt(messages: MutableList<Message>): Message
+    protected abstract fun addThinkPromptTo(messages: MutableList<Message>): Message
 
     /**
      * The next step message for the tool call agent.
