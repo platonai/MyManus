@@ -6,6 +6,8 @@ import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.manus.common.JS_GET_SCROLL_INFO
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.alwaysFalse
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
@@ -17,6 +19,7 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.function.FunctionToolCallback
+import java.awt.SystemColor.text
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
@@ -249,16 +252,24 @@ class BrowserUseTool() : AbstractTool() {
             // Interactive elements
             val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
             requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
-            val elementsInfo = jsResult.value as List<Map<String, Any?>>
-            state[STATE_INTERACTIVE_ELEMENTS] = elementsInfo
+            val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
+            elementsInfo.forEach { element ->
+                if (element["tagName"] == "textarea") {
+                    element["text"] = ""
+                    element["value"] = ""
+                }
+            }
+            state[STATE_INTERACTIVE_ELEMENTS] = prettyPulsarObjectMapper().writeValueAsString(elementsInfo)
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
         }
 
         try {
             // Capture screenshot
-            val base64Screenshot = driver.captureScreenshot()
-            state[STATE_SCREENSHOT] = base64Screenshot
+            if (alwaysFalse()) {
+                val base64Screenshot = driver.captureScreenshot()
+                state[STATE_SCREENSHOT] = base64Screenshot
+            }
         } catch (e: Exception) {
             logger.warn("Failed to capture screenshot | {}", currentUrl)
         }

@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.chat.client.DefaultChatClient
-import org.springframework.ai.chat.client.DefaultChatClient.DefaultCallResponseSpec
 import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
 import org.springframework.ai.chat.messages.ToolResponseMessage
@@ -25,6 +24,11 @@ import org.springframework.ai.tool.ToolCallback
 open class ToolCallAgent(
     llmService: LlmService, private val toolCallingManager: ToolCallingManager
 ) : ReActAgent(llmService) {
+
+    companion object {
+        private const val REPLY_MAX = 3
+    }
+
     private val logger: Logger = LoggerFactory.getLogger(ToolCallAgent::class.java)
 
     private var response: ChatResponse? = null
@@ -40,10 +44,10 @@ open class ToolCallAgent(
         return doThinkWithRetry(retry)
     }
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        // super class' behavior, doing nothing in this case
-        super.addThinkPrompt(messages)
-        return SystemPromptTemplate(TOOL_CALL_AGENT_STEP_PROMPT).createMessage(data).also { messages.add(it) }
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        // super class' behavior, doing nothing in ToolCallAgent
+        super.addThinkPromptTo(messages)
+        return SystemPromptTemplate(TOOL_CALL_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
     override val nextStepMessage: Message get() = UserMessage(TOOL_CALL_AGENT_NEXT_STEP_PROMPT)
@@ -51,7 +55,7 @@ open class ToolCallAgent(
     private fun doThinkWithRetry(retry: Int): Boolean {
         try {
             val messages = mutableListOf<Message>()
-            addThinkPrompt(messages)
+            addThinkPromptTo(messages)
 
             val chatOptions = ToolCallingChatOptions.builder().internalToolExecutionEnabled(false).build()
             val nextStepMessage = nextStepMessage
@@ -62,8 +66,15 @@ open class ToolCallAgent(
             val request = llmService.agentClient.prompt(userPrompt)
                 .advisors { it.param(CONVERSATION_ID, conversationId) }
                 .toolCallbacks(toolCallbacks)
+
             if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
-                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}", request.systemText, request.userText)
+//                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}\n{}",
+//                    request.messages.joinToString("\n"), data,
+//                    request.messages.joinToString("\n") { it.text })
+
+                val requestText = request.messages.joinToString("\n") { it.text }
+                conversationLogger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +
+                        "\nMY MANUS:\n\n{}\n\n\n", requestText)
             }
 
             response = request.call().chatResponse()
@@ -71,7 +82,12 @@ open class ToolCallAgent(
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
 
-            conversationLogger.info("\n\nAI:\n{}", thoughts)
+            conversationLogger.info("AI THOUGHTS:\n\n{}\n{}", thoughts, thoughts.result)
+            conversationLogger.info("Metadata: {}", thoughts.metadata)
+            conversationLogger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
+                toolCalls.map { it.name + " " + it.arguments })
+            conversationLogger.info("-----------------")
+
             reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
             return toolCalls.isNotEmpty()
@@ -85,51 +101,41 @@ open class ToolCallAgent(
         }
     }
 
-    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
-        val thoughts = response
-        val toolCalls = thoughts.result.output.toolCalls
-
-        if (verbose) {
-            logger.info("""😇 agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
-            logger.info("🛠️ agent has selected tools to use | [{}] {} | {}", name, toolCalls.size, toolCalls.map { it.name })
-
-            return
-        }
-
-        val answer = thoughts.result.output.text
-        if (!answer.isNullOrEmpty()) {
-            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
-        }
-        if (toolCalls.isNotEmpty()) {
-            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
-        }
-    }
-
     override fun act(): String {
         val response0 = requireNotNull(response)
+        val results: MutableList<String> = ArrayList()
+        val toolCalls = response0.result.output.toolCalls
+        if (toolCalls.isEmpty()) {
+            logger.warn("No tool calls found in response | {} | {}", name, response0.result.output)
+            return "No tool calls found in response"
+        }
+
+        val toolCall = toolCalls[0]
+        logger.info("🔧 Performing tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
 
         try {
-            val results: MutableList<String> = ArrayList()
+            val toolCallResult = toolCallingManager.executeToolCalls(userPrompt, response0)
 
-            val toolCalls = response!!.result.output.toolCalls
-            val toolCall = toolCalls[0]
+            val conversationHistory = toolCallResult.conversationHistory()
 
-            logger.info("🔧 Tool call | {} | {} {}", name, toolCall.name, toolCall.arguments)
+            conversationLogger.info("TOOL CALL RESULT:\n\n{}\n", conversationHistory.joinToString("\n"))
+            conversationLogger.info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
 
-            val result = toolCallingManager.executeToolCalls(userPrompt, response0)
-            val index = result.conversationHistory().size - 1
-            val responseMessage = result.conversationHistory()[index] as ToolResponseMessage
+            val responseMessage = conversationHistory.last() as ToolResponseMessage
             llmService.agentMemory.add(conversationId, responseMessage)
 
-            val llmCallResponse = responseMessage.responses[0].responseData()
+            val llmCallResponse = responseMessage.responses.firstOrNull()
+                ?: throw IllegalStateException("No response found in ToolResponseMessage")
 
-            results.add(llmCallResponse)
+            val responseData = llmCallResponse.responseData()
+            results.add(responseData)
 
-            logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(llmCallResponse, 1000))
+            val responseText = results.joinToString("\n\n")
 
-            return results.joinToString("\n\n")
+            logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(responseText, 1000))
+
+            return responseText
         } catch (e: Exception) {
-            val toolCall = response0.result.output.toolCalls[0]
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
             llmService.agentMemory.add(conversationId, responseMessage)
@@ -146,7 +152,24 @@ open class ToolCallAgent(
         Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
     )
 
-    companion object {
-        private const val REPLY_MAX = 3
+    private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
+        val thoughts = response
+        val toolCalls = thoughts.result.output.toolCalls
+
+        if (verbose) {
+            logger.info("""😇 Agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)
+            logger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
+                toolCalls.map { it.name + " " + it.arguments })
+
+            return
+        }
+
+        val answer = thoughts.result.output.text
+        if (!answer.isNullOrEmpty()) {
+            logger.info("""✨ {}'s answer: 🗯{}🗯""", name, answer)
+        }
+        if (toolCalls.isNotEmpty()) {
+            logger.info("""🎯 Tools prepared: {}""", toolCalls.map { it.name })
+        }
     }
 }

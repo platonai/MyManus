@@ -23,7 +23,7 @@ abstract class ReActAgent(llmService: LlmService) : AbstractAgent(llmService) {
      * @param messages The messages to add the new message to.
      * @return The newly added message.
      * */
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
         return UserMessage("")
     }
 

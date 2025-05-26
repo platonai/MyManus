@@ -45,8 +45,8 @@ class BrowserAgent(
         return super.think()
     }
 
-    override fun addThinkPrompt(messages: MutableList<Message>): Message {
-        super.addThinkPrompt(messages)
+    override fun addThinkPromptTo(messages: MutableList<Message>): Message {
+        super.addThinkPromptTo(messages)
         return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
@@ -64,16 +64,16 @@ class BrowserAgent(
 
         val tabs = browserState[STATE_TABS] as? List<*>?
 
-        data[PLACEHOLDER_URL] = String.format(FORMAT_URL_INFO, browserState[STATE_URL], browserState[STATE_TITLE])
-        data[PLACEHOLDER_INTERACTIVE_ELEMENTS] = (browserState[STATE_INTERACTIVE_ELEMENTS] as? String?) ?: ""
+        data[PLACEHOLDER_URL] = String.format("\n   URL: %s\n   Title: %s", browserState[STATE_URL], browserState[STATE_TITLE])
+        data[PLACEHOLDER_INTERACTIVE_ELEMENTS] = (browserState[STATE_INTERACTIVE_ELEMENTS] as? String?) ?: "(No interactive elements found)"
         data[PLACEHOLDER_RESULTS] = ""
-        data[PLACEHOLDER_TABS] = (if (tabs.isNullOrEmpty()) "" else String.format(FORMAT_TABS_INFO, tabs.size))
+        data[PLACEHOLDER_TABS] = (if (tabs.isNullOrEmpty()) "" else String.format("\n   %d tab(s) available", tabs.size))
 
         val scrollInfo = browserState[STATE_SCROLL_INFO] as? Map<*, *>?
         val pixelsAbove = AnyNumberConvertor(scrollInfo?.get(SCROLL_PIXELS_ABOVE)).toIntOrNull()
         val pixelsBelow = AnyNumberConvertor(scrollInfo?.get(SCROLL_PIXELS_BELOW)).toIntOrNull()
-        data[PLACEHOLDER_CONTENT_ABOVE] = pixelsAbove?.let { String.format(FORMAT_SCROLL_INFO, it) } ?: ""
-        data[PLACEHOLDER_CONTENT_BELOW] = pixelsBelow?.let { String.format(FORMAT_SCROLL_INFO, it) } ?: ""
+        data[PLACEHOLDER_CONTENT_ABOVE] = pixelsAbove?.let { String.format(" (%d pixels)", it) } ?: ""
+        data[PLACEHOLDER_CONTENT_BELOW] = pixelsBelow?.let { String.format(" (%d pixels)", it) } ?: ""
 
         data[STATE_HELP] = browserState[STATE_HELP]
         data[STATE_SCREENSHOT] = browserState[STATE_SCREENSHOT] as? String?
