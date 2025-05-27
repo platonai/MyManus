@@ -1,6 +1,6 @@
 // This script is injected into the page
 
-function get_interactive_elements() {
+function getInteractiveElements() {
     const elements = document.querySelectorAll(`
             a, button, input, select, textarea, 
             [role='button'], [role='link'],
@@ -46,4 +46,34 @@ function get_interactive_elements() {
         };
     });
     return elementsInfo.filter(el => el.isVisible && el.isInViewport);
+}
+
+/**
+ * Collects text content from all text nodes in the DOM tree
+ * @param {Node} node - The root node to start traversal from (defaults to document.body)
+ * @returns {string} The concatenated text content from all text nodes
+ */
+function getAllTextContent(node = document.body) {
+    let text = '';
+
+    // Create a TreeWalker to traverse all nodes
+    const walker = document.createTreeWalker(
+        node,
+        NodeFilter.SHOW_TEXT,
+        null
+    );
+
+    // Traverse all text nodes
+    let currentNode;
+    while (currentNode = walker.nextNode()) {
+        // Trim the text and add it to our result
+        const cleanText = currentNode.textContent
+            ?.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ') // remove control characters
+            ?.replace(/\s+/g, " ")
+        if (cleanText) {
+            text += cleanText + ' ';
+        }
+    }
+
+    return text.trim();
 }

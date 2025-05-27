@@ -74,5 +74,39 @@ const val JS_GET_INTERACTIVE_ELEMENTS = """
 }
 """
 
+const val JS_GET_ALL_TEXT_CONTENT = """
+function getAllTextContent(node = document.body) {
+    let text = '';
+
+    // Create a TreeWalker to traverse all nodes
+    const walker = document.createTreeWalker(
+        node,
+        NodeFilter.SHOW_TEXT,
+        null
+    );
+
+    // Traverse all text nodes
+    let currentNode;
+    while (currentNode = walker.nextNode()) {
+        // Trim the text and add it to our result
+        const cleanText = currentNode.textContent
+            ?.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ') // remove control characters
+            ?.replace(/\s+/g, " ")
+        if (cleanText) {
+            text += cleanText + ' ';
+        }
+    }
+
+    return text.trim();
+}
+"""
+
+val JS_GET_ALL_TEXT_CONTENT_IIFE = """
+(() => {
+    $JS_GET_ALL_TEXT_CONTENT;
+    return getAllTextContent();
+})();
+"""
+
 const val SERP_API_URL = "https://serpapi.com/search"
 const val BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"

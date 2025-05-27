@@ -2,9 +2,7 @@ package ai.platon.manus.tool
 
 import ai.platon.manus.browser.goBack
 import ai.platon.manus.browser.waitForLoadState
-import ai.platon.manus.common.AnyNumberConvertor
-import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
-import ai.platon.manus.common.JS_GET_SCROLL_INFO
+import ai.platon.manus.common.*
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.urls.URLUtils
@@ -125,12 +123,13 @@ class BrowserUseTool() : AbstractTool() {
                 }
 
                 ACTION_GET_TEXT -> {
-                    var body = driver.selectFirstTextOrNull("body") ?: ""
+//                    var body = driver.selectFirstTextOrNull("body") ?: ""
 
-                    body = StringUtils.abbreviate(body, MAX_TEXT_LENGTH)
+                    var textContent = driver.evaluateValue(JS_GET_ALL_TEXT_CONTENT_IIFE)?.toString() ?: ""
+                    textContent = StringUtils.abbreviate(textContent, MAX_TEXT_LENGTH)
 
-                    logger.info("get_text body: \n{}", body)
-                    return ToolExecuteResult(body)
+                    logger.info("get_text body: \n{}", textContent)
+                    return ToolExecuteResult(textContent)
                 }
 
                 ACTION_EXECUTE_JS -> {
@@ -295,24 +294,22 @@ class BrowserUseTool() : AbstractTool() {
                 }
             }
 
-            val visibleInteractiveElements = elementsInfo
-                .asSequence()
-                .filter { it["isVisible"] == true }
-                .filter { it["isInViewport"] == true }
-                .onEach {
-                    it["combinedText"] = it["text"] ?: it["value"] ?: it["placeholder"] ?: it["role"] ?: ""
-                }.onEach {
-                    // remove all non-printable characters
-                    it["combinedText"] = StringUtils.abbreviate(it["combinedText"].toString(), 100)
-                        .replace("[^\\p{Print}]".toRegex(), " ")
-                        .replace("\\s+".toRegex(), " ")
-                }.map {
-                    it["index"].toString() + " | " + it["vi"] + " | " + it["tagName"] + " | " + it["combinedText"]
-                }.joinToString("\n") { it.replace("\\s+", " ") }
+//            val visibleInteractiveElements = elementsInfo
+//                .asSequence()
+//                .filter { it["isVisible"] == true }
+//                .filter { it["isInViewport"] == true }
+//                .onEach {
+//                    it["description"] = it["text"] ?: it["value"] ?: it["placeholder"] ?: it["role"] ?: ""
+//                }.onEach {
+//                    // remove all non-printable characters
+//                    it["description"] = StringUtils.abbreviate(it["description"].toString(), 100)
+//                        .replace("[^\\p{Print}]".toRegex(), " ")
+//                        .replace("\\s+".toRegex(), " ")
+//                }.map {
+//                    it["index"].toString() + " | " + it["vi"] + " | " + it["tagName"] + " | " + it["description"]
+//                }.joinToString("\n") { it.replace("\\s+", " ") }
 
-            // state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements
-
-            return visibleInteractiveElements
+            return elementsInfo.map { ElementInfo(it) }.joinToString("\n") { it.brief }
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", url, JS_GET_INTERACTIVE_ELEMENTS)
         }

@@ -19,12 +19,15 @@ class SimpleAgentTaskRunner : ApplicationRunner {
         }
 
         planningFlow.newPlan("plan_" + System.currentTimeMillis())
-        val result = planningFlow.execute(args1[0])
+        val results = planningFlow.execute(args1[0])
 
-        if (result.isEmpty()) {
+        if (results.isEmpty()) {
             println("No result found.")
         } else {
-            println("Result: $result")
+            println("Result: ")
+            results.forEach {
+                println(it)
+            }
         }
 
         exitProcess(0)
