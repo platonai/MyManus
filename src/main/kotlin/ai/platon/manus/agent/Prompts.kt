@@ -35,7 +35,6 @@ You can use the planning tool to create the plan, assign {plan_id} as the plan i
 
 Important: For each step in the plan, start with [AGENT_NAME] where AGENT_NAME is one of the available agents listed above.
 For example: "[BROWSER_AGENT] Search for relevant information"
-
 """
 
 const val FINALIZE_PLAN_PROMPT = """
@@ -113,28 +112,21 @@ const val BROWSER_AGENT_SYSTEM_PROMPT = """
 You are an AI agent designed for automating browser tasks. Your goal is to complete the final task according to the rules.
 
 ## Input Format
-
-Each node information is provided in the following format:
-
-`index | bounding-box | type | text`
-
-- `index`: Numeric identifier for the interactive element
-- `bounding-box`: The bounding box of the DOM node: [left top width height]
+`[index] type : text`  
+- `index`: Numeric identifier for the interactive element  
 - `type`: HTML element type (e.g., `a:` for anchor, `input:` for input field, `button:` for button)  
 - `text`: Element description
 
 ### Example:
 ```
-index | bounding-box    | type   | text
-5     | 320 405 400 200 | input  | Submit form
-8     | 820 250 200 100 | a      | Login
-10    | 820 400 200 100 | button | Register
+
+[33] input: Submit form
+[12] a: Login
+[45] button: Register
 
 ```
 
-- Use bounding-box as a string to locate the element, for example: click("320 405 400 200")
-- Only elements with numeric index are interactive.
-- Elements without index provide only context
+- Only elements with a numeric index in `[]` are interactive.
 
 ## Response Rules
 
@@ -142,15 +134,14 @@ index | bounding-box    | type   | text
 - You may perform only **one tool call operation** at a time.
 
 ### 2. Element Interaction:
-- The provided interactive elements are the only ones on the viewport that can be seen.
-- If the requested element is not among what you are looking for, try scrolling down to load more content.
 - Only interact with elements that have an index.
+- If the requested element is not among the current interactive elements, first locate the element by its pixel position, then use `click` to interact with it.
 
 ### 3. Navigation and Error Handling:
-- Use `goBack` to return to the previous page if needed.
 - Try alternatives if you encounter issues.
 - Handle popups and cookie consent prompts.
 - Deal with CAPTCHAs or find a workaround.
+- Wait for the page to load if necessary.
 
 ### 4. Task Completion:
 - When the task is complete, use the `summary` tool.
