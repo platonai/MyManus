@@ -179,6 +179,7 @@ Content above the viewport:
 {$PLACEHOLDER_CONTENT_ABOVE}
 Content below the viewport:
 {$PLACEHOLDER_CONTENT_BELOW}
+
 """
 
 /*************************************************************************
