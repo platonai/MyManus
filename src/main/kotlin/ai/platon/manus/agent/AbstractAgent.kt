@@ -52,21 +52,21 @@ abstract class AbstractAgent(
      * @param data The data to run the agent with.
      * @return The information of each step.
      * */
-    fun run(data: Map<String, Any>): String {
+    fun run(data: Map<String, Any>): List<String> {
         return runStepByStep(data)
     }
 
     /**
      * Perform the next step
      * */
-    protected abstract fun step(): String
+    protected abstract fun step(): List<String>
 
     override fun close() {
 
     }
 
     @Synchronized
-    private fun runStepByStep(data: Map<String, Any>): String {
+    private fun runStepByStep(data: Map<String, Any>): List<String> {
         check(state == AgentState.IDLE) { "Cannot run agent from state: $state" }
 
         this.data = data
@@ -93,7 +93,7 @@ abstract class AbstractAgent(
             state = AgentState.IDLE
         }
 
-        return results.joinToString("\n")
+        return results
     }
 
     private fun handleAgentHung() {

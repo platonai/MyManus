@@ -9,10 +9,10 @@ abstract class ReActAgent(llmService: LlmService) : AbstractAgent(llmService) {
     /**
      * Perform the next step of the agent: think and act.
      * */
-    public override fun step(): String {
+    public override fun step(): List<String> {
         val moreAct = think()
         if (!moreAct) {
-            return """💯 Complete! Every thing is done! ✨✨✨"""
+            return listOf("""💯 Complete! Every thing is done! ✨✨✨""")
         }
         return act()
     }
@@ -35,5 +35,5 @@ abstract class ReActAgent(llmService: LlmService) : AbstractAgent(llmService) {
     /**
      * Act and return the result.
      * */
-    protected abstract fun act(): String
+    protected abstract fun act(): List<String>
 }

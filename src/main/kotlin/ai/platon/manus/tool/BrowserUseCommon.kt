@@ -2,6 +2,7 @@ package ai.platon.manus.tool
 
 // Action constants
 const val ACTION_NAVIGATE = "navigate"
+const val ACTION_GO_BACK = "go_back"
 const val ACTION_CLICK = "click"
 const val ACTION_INPUT_TEXT = "input_text"
 const val ACTION_KEY_ENTER = "key_enter"
@@ -60,6 +61,7 @@ Automate web browser interactions including visiting pages, clicking elements, e
 You can perform these core actions:
 
 - '$ACTION_NAVIGATE': Go to a specific URL
+- '$ACTION_GO_BACK': Navigate back to the previous page
 - '$ACTION_CLICK': Click an element by index
 - '$ACTION_INPUT_TEXT': Input text into an element
 - '$ACTION_KEY_ENTER': Hit the Enter key
@@ -82,6 +84,7 @@ const val BROWSER_USE_TOOL_PARAMETERS = """
             "type": "string",
             "enum": [
                 "$ACTION_NAVIGATE",
+                "$ACTION_GO_BACK",
                 "$ACTION_CLICK",
                 "$ACTION_INPUT_TEXT",
                 "$ACTION_KEY_ENTER",

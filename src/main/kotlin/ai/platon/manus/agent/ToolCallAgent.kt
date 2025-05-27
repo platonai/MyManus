@@ -88,13 +88,13 @@ open class ToolCallAgent(
         }
     }
 
-    override fun act(): String {
+    override fun act(): List<String> {
         val response0 = requireNotNull(response)
         val results: MutableList<String> = ArrayList()
         val toolCalls = response0.result.output.toolCalls
         if (toolCalls.isEmpty()) {
             logger.warn("No tool calls found in response | {} | {}", name, response0.result.output)
-            return "No tool calls found in response"
+            return listOf("No tool calls found in response")
         }
 
         val toolCall = toolCalls[0]
@@ -121,14 +121,14 @@ open class ToolCallAgent(
 
             logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(responseText, 1000))
 
-            return responseText
+            return results
         } catch (e: Exception) {
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
             llmService.agentMemory.add(conversationId, responseMessage)
 
             logger.warn("""Act failed 😔 | {}""", e.message)
-            return String.format("""Act failed 😔 | %s""", e.message)
+            return listOf(String.format("""Act failed 😔 | %s""", e.message))
         }
     }
 

@@ -1,5 +1,6 @@
 package ai.platon.manus.tool
 
+import ai.platon.manus.browser.goBack
 import ai.platon.manus.browser.waitForLoadState
 import ai.platon.manus.common.AnyNumberConvertor
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
@@ -75,13 +76,25 @@ class BrowserUseTool() : AbstractTool() {
                     return ToolExecuteResult("Navigated to $url")
                 }
 
+                ACTION_GO_BACK -> {
+                    val count = driver.browser.navigateHistory.size
+                    if (count > 2) {
+                        // go back to the previous page
+                        driver.goBack()
+                        driver.waitForLoadState("NETWORKIDLE")
+                        return ToolExecuteResult("Went back to the previous page")
+                    } else {
+                        return ToolExecuteResult("No previous page to go back to")
+                    }
+                }
+
                 ACTION_CLICK -> {
                     if (vi == null) {
                         return ToolExecuteResult("Vi is required | $ACTION_CLICK")
                     }
                     driver.click("*[vi='$vi']")
                     driver.waitForLoadState("NETWORKIDLE")
-                    return ToolExecuteResult("Clicked element at $vi")
+                    return ToolExecuteResult("Clicked element at [$vi]")
                 }
 
                 ACTION_INPUT_TEXT -> {
@@ -89,7 +102,7 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("Index and text are required | $ACTION_INPUT_TEXT")
                     }
                     driver.fill("*[vi='$vi']", text)
-                    return ToolExecuteResult("Successfully input '$text' into element at $vi")
+                    return ToolExecuteResult("Successfully input '$text' into element at [$vi]")
                 }
 
                 ACTION_KEY_ENTER -> {
@@ -98,7 +111,7 @@ class BrowserUseTool() : AbstractTool() {
                     }
                     driver.press("*[vi='$vi']", "Enter")
                     driver.waitForLoadState("NETWORKIDLE")
-                    return ToolExecuteResult("Hit the enter key at $vi")
+                    return ToolExecuteResult("Hit the enter key at [$vi]")
                 }
 
                 ACTION_SCREENSHOT -> {

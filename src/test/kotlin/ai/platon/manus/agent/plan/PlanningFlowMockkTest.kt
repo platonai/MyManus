@@ -45,18 +45,18 @@ class PlanningFlowMockkTest {
 
     @Test
     fun `test execute with empty input`() {
-        val result = planningFlow.execute("")
-        println(result)
-        assertTrue { result.isBlank() }
+        val results = planningFlow.execute("")
+        println(results)
+        assertTrue { results.isEmpty() }
     }
 
     @Test
     fun `test execute with valid input`() {
-        every { agent1.run(any()) } returns "Step 1 executed"
-        every { agent2.run(any()) } returns "Step 2 executed"
+        every { agent1.run(any()) } returns listOf("Step 1 executed")
+        every { agent2.run(any()) } returns listOf("Step 2 executed")
 
-        val result = planningFlow.execute("Test request")
-        assertNotNull(result)
+        val results = planningFlow.execute("Test request")
+        assertNotNull(results)
     }
 
     @Test
@@ -144,17 +144,17 @@ class PlanningFlowMockkTest {
 
     @Test
     fun `test execute step successfully`() {
-        every { agent1.run(any()) } returns "Step executed successfully"
+        every { agent1.run(any()) } returns listOf("Step executed successfully")
 
-        val result = planningFlow.executeStep(agent1, mapOf("text" to "Step 1"))
-        assertEquals("Step executed successfully", result)
+        val results = planningFlow.executeStep(agent1, mapOf("text" to "Step 1"))
+        assertEquals("Step executed successfully", results[0])
     }
 
     @Test
     fun `test execute step with exception`() {
         every { agent1.run(any()) } throws RuntimeException("Execution failed")
 
-        val result = planningFlow.executeStep(agent1, mapOf("text" to "Step 1"))
-        assertEquals("""Failed to execute step #-1 🫨 | Execution failed""", result)
+        val results = planningFlow.executeStep(agent1, mapOf("text" to "Step 1"))
+        assertEquals("""Failed to execute step #-1 🫨 | Execution failed""", results[0])
     }
 }

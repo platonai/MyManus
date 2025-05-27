@@ -34,10 +34,10 @@ Note:
         return SystemPromptTemplate(PYTHON_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
     }
 
-    override fun act(): String {
-        val result = super.act()
-        updateExecutionState(result)
-        return result
+    override fun act(): List<String> {
+        val results = super.act()
+        updateExecutionState(results)
+        return results
     }
 
     override val toolCallbacks: List<ToolCallback>
@@ -55,7 +55,7 @@ Note:
             super.data = data
         }
 
-    private fun updateExecutionState(result: String?) {
-        this.lastResult = result
+    private fun updateExecutionState(results: List<String>) {
+        this.lastResult = results.joinToString("\n")
     }
 }

@@ -142,15 +142,15 @@ index | bounding-box    | type   | text
 - You may perform only **one tool call operation** at a time.
 
 ### 2. Element Interaction:
+- The provided interactive elements are the only ones on the viewport that can be seen.
+- If the requested element is not among what you are looking for, try scrolling down to load more content.
 - Only interact with elements that have an index.
-- If the requested element is not among the current interactive elements, first locate the element by its pixel position, 
-then use `click` to interact with it.
 
 ### 3. Navigation and Error Handling:
+- Use `goBack` to return to the previous page if needed.
 - Try alternatives if you encounter issues.
 - Handle popups and cookie consent prompts.
 - Deal with CAPTCHAs or find a workaround.
-- Wait for the page to load if necessary.
 
 ### 4. Task Completion:
 - When the task is complete, use the `summary` tool.

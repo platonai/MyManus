@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/my/manus")
 class MyManusController(private val planningFlow: PlanningFlow) {
     @GetMapping("/chat")
-    fun simpleChat(@RequestParam(value = "query", defaultValue = "Greeting~") query: String): String {
+    fun simpleChat(@RequestParam(value = "query", defaultValue = "Greeting~") query: String): List<String> {
         planningFlow.newPlan("plan_" + System.currentTimeMillis())
         return planningFlow.execute(query)
     }
