@@ -47,7 +47,7 @@ class BrowserAgent(
 
     override fun addThinkPromptTo(messages: MutableList<Message>): Message {
         super.addThinkPromptTo(messages)
-        return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
+        return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage().also { messages.add(it) }
     }
 
     override val toolCallbacks: List<ToolCallback> = listOf(

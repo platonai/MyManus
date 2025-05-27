@@ -1,6 +1,8 @@
 package ai.platon.manus.browser
 
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
+import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
+import ai.platon.pulsar.common.serialize.json.pulsarObjectMapper
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.Browser
 import org.junit.jupiter.api.AfterAll
@@ -73,12 +75,11 @@ class BrowserTest {
     }
 
     @Test
-    fun `test JS_GET_INTERACTIVE_ELEMENTS`() = webDriverService.runWebDriverTest("https://www.baidu.com", browser) { driver ->
+    fun `test JS_GET_INTERACTIVE_ELEMENTS`() = webDriverService.runWebDriverTest("https://www.amazon.com/dp/B0C1H26C46", browser) { driver ->
         val code = JS_GET_INTERACTIVE_ELEMENTS
 
         val result = driver.evaluateValueDetail("($code)()")
 
-        // println(result)
         assertNotNull(result)
         assertNull(result.exception)
 
@@ -89,6 +90,8 @@ class BrowserTest {
                 element["value"] = ""
             }
         }
+
+        println(prettyPulsarObjectMapper().writeValueAsString(elementsInfo))
 
         val value = result.value
         assertNotNull(value)

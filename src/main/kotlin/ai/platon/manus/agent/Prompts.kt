@@ -1,8 +1,6 @@
 package ai.platon.manus.agent
 
-import ai.platon.manus.common.PLACEHOLDER_INTERACTIVE_ELEMENTS
-import ai.platon.manus.common.PLACEHOLDER_TABS
-import ai.platon.manus.common.PLACEHOLDER_URL
+import ai.platon.manus.common.*
 import ai.platon.manus.tool.ACTION_GET_HTML
 import ai.platon.manus.tool.ACTION_GET_TEXT
 
@@ -37,6 +35,7 @@ You can use the planning tool to create the plan, assign {plan_id} as the plan i
 
 Important: For each step in the plan, start with [AGENT_NAME] where AGENT_NAME is one of the available agents listed above.
 For example: "[BROWSER_AGENT] Search for relevant information"
+
 """
 
 const val FINALIZE_PLAN_PROMPT = """
@@ -111,40 +110,31 @@ the guidelines provided.
  * ***********************************************************************/
 
 const val BROWSER_AGENT_SYSTEM_PROMPT = """
-You are an AI agent designed to automate browser tasks.
-
-# Input Format
-
-Current URL:
-{$PLACEHOLDER_URL}
-
-Open Tabs:
-{$PLACEHOLDER_TABS}
-
-Interactive Elements:
-{$PLACEHOLDER_INTERACTIVE_ELEMENTS}
-
-"""
-
-const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
 You are an AI agent designed for automating browser tasks. Your goal is to complete the final task according to the rules.
 
 ## Input Format
-`[index] type : text`  
-- `index`: Numeric identifier for the interactive element  
+
+Each node information is provided in the following format:
+
+`index | bounding-box | type | text`
+
+- `index`: Numeric identifier for the interactive element
+- `bounding-box`: The bounding box of the DOM node: [left top width height]
 - `type`: HTML element type (e.g., `a:` for anchor, `input:` for input field, `button:` for button)  
 - `text`: Element description
 
 ### Example:
 ```
-
-[33] input: Submit form
-[12] a: Login
-[45] button: Register
+index | bounding-box    | type   | text
+5     | 320 405 400 200 | input  | Submit form
+8     | 820 250 200 100 | a      | Login
+10    | 820 400 200 100 | button | Register
 
 ```
 
-- Only elements with a numeric index in `[]` are interactive.
+- Use bounding-box as a string to locate the element, for example: click("320 405 400 200")
+- Only elements with numeric index are interactive.
+- Elements without index provide only context
 
 ## Response Rules
 
@@ -153,7 +143,8 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 
 ### 2. Element Interaction:
 - Only interact with elements that have an index.
-- If the requested element is not among the current interactive elements, first locate the element by its pixel position, then use `click` to interact with it.
+- If the requested element is not among the current interactive elements, first locate the element by its pixel position, 
+then use `click` to interact with it.
 
 ### 3. Navigation and Error Handling:
 - Try alternatives if you encounter issues.
@@ -173,6 +164,21 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 Take into account both the visible content and the potential content that might exist beyond the current viewport.
 Act methodically—track your progress and retain the knowledge you've acquired so far.
 
+"""
+
+const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
+Current URL:
+{$PLACEHOLDER_URL}
+Open Tabs:
+{$PLACEHOLDER_TABS}
+
+Interactive Elements:
+{$PLACEHOLDER_INTERACTIVE_ELEMENTS}
+
+Content above the viewport:
+{$PLACEHOLDER_CONTENT_ABOVE}
+Content below the viewport:
+{$PLACEHOLDER_CONTENT_BELOW}
 """
 
 /*************************************************************************

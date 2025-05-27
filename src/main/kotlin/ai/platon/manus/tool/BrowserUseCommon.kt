@@ -19,7 +19,7 @@ const val ACTION_REFRESH = "refresh"
 const val PARAM_ACTION = "action"
 const val PARAM_URL = "url"
 const val PARAM_INDEX = "index"
-const val PARAM_VI = "vi"
+const val PARAM_BOUNDING_BOX = "bounding_box"
 const val PARAM_TEXT = "text"
 const val PARAM_SCRIPT = "script"
 const val PARAM_SCROLL_AMOUNT = "scroll_amount"
@@ -41,104 +41,119 @@ const val SCROLL_PIXELS_BELOW = "pixels_below"
 const val SCROLL_TOTAL_HEIGHT = "total_height"
 const val SCROLL_VIEWPORT_HEIGHT = "viewport_height"
 
+// Element info constants
+const val ELEMENT_INDEX = "index"
+const val ELEMENT_TAG_NAME = "tagName"
+const val ELEMENT_TYPE = "type"
+const val ELEMENT_ROLE = "role"
+const val ELEMENT_TEXT = "text"
+const val ELEMENT_VALUE = "value"
+const val ELEMENT_PLACEHOLDER = "placeholder"
+const val ELEMENT_NAME = "name"
+const val ELEMENT_ID = "id"
+const val ELEMENT_ARIA_LABEL = "aria-label"
+const val ELEMENT_IS_VISIBLE = "isVisible"
+
 const val BROWSER_USE_TOOL_DESCRIPTION = """
-Interact with the web browser to perform various actions such as navigation, element interaction, content extraction, and tab management.  
-For search-related tasks, prioritize using this tool.
+Automate web browser interactions including visiting pages, clicking elements, extracting content, and managing tabs.
 
-### Supported Actions:
+You can perform these core actions:
 
-- `'navigate'`: Visit a specific URL (defaults to `https://baidu.com`)
-- `'click'`: Click an element by its index
-- `'input_text'`: Enter text into an element; for Baidu, the input box has a specific index
-- `'key_enter'`: Press the Enter key
-- `'screenshot'`: Capture a screenshot of the screen
-- `'get_html'`: Retrieve the HTML content of the current page (URL parameters not supported)
-- `'get_text'`: Retrieve the text content of the current page (URL parameters not supported)
-- `'execute_js'`: Execute JavaScript code
-- `'scroll'`: Scroll the page
-- `'switch_tab'`: Switch to a specific tab
-- `'new_tab'`: Open a new tab
-- `'close_tab'`: Close the current tab
-- `'refresh'`: Refresh the current page
-
+- '$ACTION_NAVIGATE': Go to a specific URL
+- '$ACTION_CLICK': Click an element by index
+- '$ACTION_INPUT_TEXT': Input text into an element
+- '$ACTION_KEY_ENTER': Hit the Enter key
+- '$ACTION_SCREENSHOT': Capture a screenshot
+- '$ACTION_GET_HTML': Get page HTML content
+- '$ACTION_GET_TEXT': Get text content of the page
+- '$ACTION_EXECUTE_JS': Execute JavaScript code
+- '$ACTION_SCROLL': Scroll the page
+- '$ACTION_SWITCH_TAB': Switch to a specific tab
+- '$ACTION_NEW_TAB': Open a new tab
+- '$ACTION_CLOSE_TAB': Close the current tab
+- '$ACTION_REFRESH': Refresh the current page
 """
 
 const val BROWSER_USE_TOOL_PARAMETERS = """
 {
     "type": "object",
     "properties": {
-        "action": {
+        "$PARAM_ACTION": {
             "type": "string",
             "enum": [
-                "navigate",
-                "click",
-                "input_text",
-                "key_enter",
-                "screenshot",
-                "get_html",
-                "get_text",
-                "execute_js",
-                "scroll",
-                "switch_tab",
-                "new_tab",
-                "close_tab",
-                "refresh"
+                "$ACTION_NAVIGATE",
+                "$ACTION_CLICK",
+                "$ACTION_INPUT_TEXT",
+                "$ACTION_KEY_ENTER",
+                "$ACTION_SCREENSHOT",
+                "$ACTION_GET_HTML",
+                "$ACTION_GET_TEXT",
+                "$ACTION_EXECUTE_JS",
+                "$ACTION_SCROLL",
+                "$ACTION_SWITCH_TAB",
+                "$ACTION_NEW_TAB",
+                "$ACTION_CLOSE_TAB",
+                "$ACTION_REFRESH"
             ],
             "description": "The browser action to perform"
         },
-        "url": {
+        "$PARAM_URL": {
             "type": "string",
-            "description": "URL for 'navigate' or 'new_tab' actions , don't support get_text and get_html"
+            "description": "URL for '$ACTION_NAVIGATE' or '$ACTION_NEW_TAB' actions"
         },
-        "index": {
+        "$PARAM_INDEX": {
             "type": "integer",
-            "description": "Element index for 'click' or 'input_text' actions"
+            "description": "Element index for '$ACTION_CLICK' or '$ACTION_INPUT_TEXT' actions"
         },
-        "text": {
+        "$PARAM_BOUNDING_BOX": {
             "type": "string",
-            "description": "Text for 'input_text' action"
+            "description": "Element bounding box used to locate the element for '$ACTION_CLICK' or '$ACTION_INPUT_TEXT' actions"
         },
-        "script": {
+        "$PARAM_TEXT": {
             "type": "string",
-            "description": "JavaScript code for 'execute_js' action"
+            "description": "Text for '$ACTION_INPUT_TEXT' action"
         },
-        "scroll_amount": {
-            "type": "integer",
-            "description": "Pixels to scroll (positive for down, negative for up) for 'scroll' action"
+        "$PARAM_SCRIPT": {
+            "type": "string",
+            "description": "JavaScript code for '$ACTION_EXECUTE_JS' action"
         },
-        "tab_id": {
+        "$PARAM_SCROLL_AMOUNT": {
             "type": "integer",
-            "description": "Tab ID for 'switch_tab' action"
+            "description": "Pixels to scroll (positive for down, negative for up) for '$ACTION_SCROLL' action"
+        },
+        "$PARAM_TAB_ID": {
+            "type": "integer",
+            "description": "Tab ID for '$ACTION_SWITCH_TAB' action"
         }
     },
     "required": [
-        "action"
+        "$PARAM_ACTION"
     ],
     "dependencies": {
-        "navigate": [
-            "url"
+        "$ACTION_NAVIGATE": [
+            "$PARAM_URL"
         ],
-        "click": [
-            "index"
+        "$ACTION_CLICK": [
+            "$PARAM_BOUNDING_BOX"
         ],
-        "input_text": [
-            "index",
-            "text"
+        "$ACTION_INPUT_TEXT": [
+            "$PARAM_BOUNDING_BOX",
+            "$PARAM_TEXT"
         ],
-        "key_enter": [
-            "index"
+        "$ACTION_KEY_ENTER": [
+            "$PARAM_BOUNDING_BOX"
         ],
-        "execute_js": [
-            "script"
+        "$ACTION_EXECUTE_JS": [
+            "$PARAM_SCRIPT"
         ],
-        "switch_tab": [
-            "tab_id"
+        "$ACTION_SWITCH_TAB": [
+            "$PARAM_TAB_ID"
         ],
-        "new_tab": [
-            "url"
+        "$ACTION_NEW_TAB": [
+            "$PARAM_URL"
         ],
-        "scroll": [
-            "scroll_amount"
+        "$ACTION_SCROLL": [
+            "$PARAM_SCROLL_AMOUNT"
         ]
     }
 }

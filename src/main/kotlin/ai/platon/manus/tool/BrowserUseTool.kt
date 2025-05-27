@@ -1,17 +1,18 @@
 package ai.platon.manus.tool
 
-import ai.platon.manus.browser.*
+import ai.platon.manus.browser.querySelectorAll
+import ai.platon.manus.browser.waitForLoadState
 import ai.platon.manus.common.AnyNumberConvertor
 import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.manus.common.JS_GET_SCROLL_INFO
 import ai.platon.manus.tool.support.ToolExecuteResult
 import ai.platon.pulsar.common.alwaysFalse
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.PulsarSettings
+import ai.platon.pulsar.skeleton.context.PulsarContexts
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
 import kotlinx.coroutines.runBlocking
@@ -56,14 +57,15 @@ class BrowserUseTool() : AbstractTool() {
     }
 
     private suspend fun run0(args: Map<String, Any?>): ToolExecuteResult {
+        SESSION.connect(driver)
+
         val action = args[PARAM_ACTION] as? String? ?: return ToolExecuteResult("Action parameter is required")
         val url = args[PARAM_URL]?.toString()
-        val index = AnyNumberConvertor(args[PARAM_INDEX]).toIntOrNull() ?: -1
-        val vi = AnyNumberConvertor(args[PARAM_VI]).toString()
+        val vi = args[PARAM_BOUNDING_BOX]?.toString()
         val text = args[PARAM_TEXT]?.toString()
         val script = args[PARAM_SCRIPT]?.toString()
         val scrollAmount = AnyNumberConvertor(args[PARAM_SCROLL_AMOUNT]).toIntOrNull()
-        val tabId = AnyNumberConvertor(args[PARAM_TAB_ID]).toIntOrNull() ?: -1
+        val tabId = AnyNumberConvertor(args[PARAM_TAB_ID]).toIntOrNull()
 
         try {
             when (action) {
@@ -71,45 +73,34 @@ class BrowserUseTool() : AbstractTool() {
                     if (url == null) {
                         return ToolExecuteResult("URL is required | $ACTION_NAVIGATE")
                     }
-
-                    driver.navigateTo(url)
-                    driver.waitForLoadState("NETWORKIDLE")
-                    
+                    SESSION.open(url)
                     return ToolExecuteResult("Navigated to $url")
                 }
 
                 ACTION_CLICK -> {
-                    if (index < 0) {
-                        return ToolExecuteResult("Index is required | $ACTION_CLICK")
+                    if (vi == null) {
+                        return ToolExecuteResult("Vi is required | $ACTION_CLICK")
                     }
-
-                    val interactiveElements = getInteractiveElements()
-                    driver.click(interactiveElements[index])
+                    driver.click("*[vi='$vi']")
                     driver.waitForLoadState("NETWORKIDLE")
-
-                    return ToolExecuteResult("Clicked element at #$index")
+                    return ToolExecuteResult("Clicked element at $vi")
                 }
 
                 ACTION_INPUT_TEXT -> {
-                    if (index < 0 || text == null) {
+                    if (vi == null || text == null) {
                         return ToolExecuteResult("Index and text are required | $ACTION_INPUT_TEXT")
                     }
-
-                    val interactiveElements = getInteractiveElements()
-                    driver.fill(interactiveElements[index], text)
-                    return ToolExecuteResult("Successfully input '$text' into element at #$index")
+                    driver.fill("*[vi='$vi']", text)
+                    return ToolExecuteResult("Successfully input '$text' into element at $vi")
                 }
 
                 ACTION_KEY_ENTER -> {
-                    if (index < 0) {
-                        return ToolExecuteResult("Index is required | $ACTION_KEY_ENTER")
+                    if (vi == null) {
+                        return ToolExecuteResult("Vi is required | $ACTION_KEY_ENTER")
                     }
-
-                    val interactiveElements = getInteractiveElements()
-                    driver.press(interactiveElements[index], "Enter")
+                    driver.press("*[vi='$vi']", "Enter")
                     driver.waitForLoadState("NETWORKIDLE")
-                    
-                    return ToolExecuteResult("Hit the enter key at #$index")
+                    return ToolExecuteResult("Hit the enter key at $vi")
                 }
 
                 ACTION_SCREENSHOT -> {
@@ -119,13 +110,16 @@ class BrowserUseTool() : AbstractTool() {
 
                 ACTION_GET_HTML -> {
                     val html = driver.outerHTML(":root") ?: ""
-                    return ToolExecuteResult(StringUtils.abbreviate(html, MAX_LENGTH))
+                    return ToolExecuteResult(StringUtils.abbreviate(html, MAX_HTML_LENGTH))
                 }
 
                 ACTION_GET_TEXT -> {
-                    val textContent = driver.getTextContent()
-                    logger.debug("get_text body is {}", textContent)
-                    return ToolExecuteResult(textContent)
+                    var body = driver.selectFirstTextOrNull("body") ?: ""
+
+                    body = StringUtils.abbreviate(body, MAX_TEXT_LENGTH)
+
+                    logger.info("get_text body: \n{}", body)
+                    return ToolExecuteResult(body)
                 }
 
                 ACTION_EXECUTE_JS -> {
@@ -161,8 +155,7 @@ class BrowserUseTool() : AbstractTool() {
                     if (url == null) {
                         return ToolExecuteResult("URL is required | $ACTION_NEW_TAB")
                     }
-
-                    val newDriver = browser.newDriver()
+                    val newDriver = driver.browser.newDriver()
                     newDriver.navigateTo(url)
                     driver.waitForLoadState("NETWORKIDLE")
                     return ToolExecuteResult("Opened new tab | $url")
@@ -174,19 +167,20 @@ class BrowserUseTool() : AbstractTool() {
                 }
 
                 ACTION_SWITCH_TAB -> {
-                    if (tabId < 0) {
+                    if (tabId == null) {
                         return ToolExecuteResult("Tab ID is required | $ACTION_SWITCH_TAB")
                     }
-
-                    ACTIVE_DRIVER = drivers[tabId]
+                    val drivers = driver.browser.drivers
+                    ACTIVE_DRIVER = drivers[tabId.toString()] ?: return ToolExecuteResult("Tab ID not found | $tabId")
                     return ToolExecuteResult("Switched to tab | $tabId")
                 }
 
                 ACTION_REFRESH -> {
-                    driver.reload()
+                    driver.navigateTo(driver.currentUrl())
                     driver.waitForLoadState("NETWORKIDLE")
                     return ToolExecuteResult("Page refreshed")
                 }
+
                 else -> return ToolExecuteResult("Unknown action | $action")
             }
         } catch (e: Exception) {
@@ -215,6 +209,8 @@ class BrowserUseTool() : AbstractTool() {
     }
 
     private suspend fun computeCurrentStateTo(state: MutableMap<String, Any?>) {
+        SESSION.connect(driver)
+
         // Basic information
         val currentUrl = driver.currentUrl()
 
@@ -241,6 +237,15 @@ class BrowserUseTool() : AbstractTool() {
         }
 
         try {
+            // make sure all metadata are available
+            driver.evaluateDetail("__pulsar_utils__.waitForReady()")
+            // make sure all metadata are available
+            driver.evaluateDetail("__pulsar_utils__.compute()")
+        } catch (e: Exception) {
+            logger.warn("Failed to get compute the features of the document | {}", currentUrl)
+        }
+
+        try {
             // Viewport and scroll information
             val scrollInfo = driver.evaluateValue("($JS_GET_SCROLL_INFO)()") as Map<String, Any?>
             state[STATE_SCROLL_INFO] = scrollInfo
@@ -254,12 +259,29 @@ class BrowserUseTool() : AbstractTool() {
             requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
             val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
             elementsInfo.forEach { element ->
+                // fix baidu.com's textarea issue
                 if (element["tagName"] == "textarea") {
                     element["text"] = ""
                     element["value"] = ""
                 }
             }
-            state[STATE_INTERACTIVE_ELEMENTS] = prettyPulsarObjectMapper().writeValueAsString(elementsInfo)
+
+            val visibleInteractiveElements = elementsInfo
+                .asSequence()
+                .filter { it["isVisible"] == true }
+                .filter { it["isInViewport"] == true }
+                .onEach {
+                    it["combinedText"] = it["text"] ?: it["value"] ?: it["placeholder"] ?: it["role"] ?: ""
+                }.onEach {
+                    // remove all non-printable characters
+                    it["combinedText"] = StringUtils.abbreviate(it["combinedText"].toString(), 100)
+                        .replace("[^\\p{Print}]".toRegex(), " ")
+                        .replace("\\s+".toRegex(), " ")
+                }.map {
+                    it["index"].toString() + " | " + it["vi"] + " | " + it["tagName"] + " | " + it["combinedText"]
+                }.joinToString("\n") { it.replace("\\s+", " ") }
+
+            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
         }
@@ -275,7 +297,8 @@ class BrowserUseTool() : AbstractTool() {
         }
 
         // Add help information
-        state[STATE_HELP] = "[0], [1], [2], etc., are clickable indices correspond to the listed elements." +
+        state[STATE_HELP] = "Element description has the format: `index | bounding-box | type | text`, " +
+                "use bounding-box to locate the corresponding the elements." +
                 "Clicking them will navigate to or interact with their associated content."
     }
 
@@ -288,7 +311,10 @@ class BrowserUseTool() : AbstractTool() {
     companion object {
         private val logger: Logger = LoggerFactory.getLogger(BrowserUseTool::class.java)
 
-        private const val MAX_LENGTH = 20000
+        private const val MAX_HTML_LENGTH = 20000
+        private const val MAX_TEXT_LENGTH = 10000
+
+        val SESSION = PulsarContexts.getOrCreateSession()
 
         var BROWSER = DefaultBrowserFactory().launchDefaultBrowser()
 
