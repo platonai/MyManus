@@ -95,7 +95,7 @@ class BrowserUseTool() : AbstractTool() {
                     }
 
                     val interactiveElements = getInteractiveElements()
-                    driver.fill(interactiveElements[index], text)
+                    driver.type(interactiveElements[index], text)
                     return ToolExecuteResult("Successfully input '$text' into element at #$index")
                 }
 
@@ -271,10 +271,11 @@ class BrowserUseTool() : AbstractTool() {
                         .replace("[^\\p{Print}]".toRegex(), " ")
                         .replace("\\s+".toRegex(), " ")
                 }.map {
-                    it["index"].toString() + " | " + it["tagName"] + " | " + it["description"]
-                }.joinToString("\n") { it.replace("\\s+", " ") }
+                    // [index] type : text
+                    "[" + it["index"] + "] " + it["tagName"] + ": " + (it["description"] ?: "")
+                }
 
-            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements
+            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements.joinToString("\n")
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
         }
