@@ -1,9 +1,7 @@
 package ai.platon.manus.tool
 
-import ai.platon.manus.browser.querySelectorAll
 import ai.platon.manus.browser.waitForLoadState
 import ai.platon.manus.common.AnyNumberConvertor
-import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.manus.common.JS_GET_SCROLL_INFO
 import ai.platon.manus.tool.support.ToolExecuteResult
@@ -20,7 +18,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.function.FunctionToolCallback
-import java.awt.SystemColor.text
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
@@ -32,10 +29,11 @@ class BrowserUseTool() : AbstractTool() {
     /**
      * The ordered drivers, each driver is associated with a tab.
      * */
-    val drivers get() = driver.browser.drivers.values
-        .filterIsInstance<AbstractWebDriver>()
-        .filter { it.isActive }
-        .sortedBy { it.id }
+    val drivers
+        get() = driver.browser.drivers.values
+            .filterIsInstance<AbstractWebDriver>()
+            .filter { it.isActive }
+            .sortedBy { it.id }
 
     /**
      * The current active driver.
@@ -73,7 +71,7 @@ class BrowserUseTool() : AbstractTool() {
                     if (url == null) {
                         return ToolExecuteResult("URL is required | $ACTION_NAVIGATE")
                     }
-                    SESSION.open(url)
+                    SESSION.open(driver.currentUrl(), driver)
                     return ToolExecuteResult("Navigated to $url")
                 }
 
@@ -156,8 +154,7 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("URL is required | $ACTION_NEW_TAB")
                     }
                     val newDriver = driver.browser.newDriver()
-                    newDriver.navigateTo(url)
-                    driver.waitForLoadState("NETWORKIDLE")
+                    SESSION.open(url, newDriver)
                     return ToolExecuteResult("Opened new tab | $url")
                 }
 
@@ -176,8 +173,7 @@ class BrowserUseTool() : AbstractTool() {
                 }
 
                 ACTION_REFRESH -> {
-                    driver.navigateTo(driver.currentUrl())
-                    driver.waitForLoadState("NETWORKIDLE")
+                    SESSION.open(driver.currentUrl(), driver)
                     return ToolExecuteResult("Page refreshed")
                 }
 
@@ -237,12 +233,12 @@ class BrowserUseTool() : AbstractTool() {
         }
 
         try {
-            // make sure all metadata are available
+            // make sure the document is fully loaded
             driver.evaluateDetail("__pulsar_utils__.waitForReady()")
             // make sure all metadata are available
             driver.evaluateDetail("__pulsar_utils__.compute()")
         } catch (e: Exception) {
-            logger.warn("Failed to get compute the features of the document | {}", currentUrl)
+            logger.warn("Failed to compute the features of the document | {}", currentUrl)
         }
 
         try {
@@ -253,6 +249,26 @@ class BrowserUseTool() : AbstractTool() {
             logger.warn("Failed to get scroll info via js | {}\n{}", currentUrl, JS_GET_SCROLL_INFO)
         }
 
+        state[STATE_INTERACTIVE_ELEMENTS] = getInteractiveElements(currentUrl, state)
+
+        try {
+            // Capture screenshot
+            if (alwaysFalse()) {
+                val base64Screenshot = driver.captureScreenshot()
+                state[STATE_SCREENSHOT] = base64Screenshot
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to capture screenshot | {}", currentUrl)
+        }
+
+        // Add help information
+        state[STATE_HELP] = "Element description has the format: `index | bounding-box | type | text`, " +
+                "use bounding-box to locate the corresponding the elements." +
+                "Clicking them will navigate to or interact with their associated content."
+    }
+
+    // Add helper method for element selection
+    private suspend fun getInteractiveElements(url: String, state: MutableMap<String, Any?>): String? {
         try {
             // Interactive elements
             val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
@@ -281,31 +297,14 @@ class BrowserUseTool() : AbstractTool() {
                     it["index"].toString() + " | " + it["vi"] + " | " + it["tagName"] + " | " + it["combinedText"]
                 }.joinToString("\n") { it.replace("\\s+", " ") }
 
-            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements
+            // state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements
+
+            return visibleInteractiveElements
         } catch (e: Exception) {
-            logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
+            logger.warn("Failed to get elements info via js | {} |\n{}", url, JS_GET_INTERACTIVE_ELEMENTS)
         }
 
-        try {
-            // Capture screenshot
-            if (alwaysFalse()) {
-                val base64Screenshot = driver.captureScreenshot()
-                state[STATE_SCREENSHOT] = base64Screenshot
-            }
-        } catch (e: Exception) {
-            logger.warn("Failed to capture screenshot | {}", currentUrl)
-        }
-
-        // Add help information
-        state[STATE_HELP] = "Element description has the format: `index | bounding-box | type | text`, " +
-                "use bounding-box to locate the corresponding the elements." +
-                "Clicking them will navigate to or interact with their associated content."
-    }
-
-    // Add helper method for element selection
-    private suspend fun getInteractiveElements(): List<Int> {
-        val selector = BROWSER_INTERACTIVE_ELEMENTS_SELECTOR.trimIndent().trim()
-        return driver.querySelectorAll(selector)
+        return null
     }
 
     companion object {
