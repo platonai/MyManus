@@ -71,7 +71,7 @@ class BrowserUseTool() : AbstractTool() {
                     if (url == null) {
                         return ToolExecuteResult("URL is required | $ACTION_NAVIGATE")
                     }
-                    SESSION.open(driver.currentUrl(), driver)
+                    SESSION.open(url, driver)
                     return ToolExecuteResult("Navigated to $url")
                 }
 
