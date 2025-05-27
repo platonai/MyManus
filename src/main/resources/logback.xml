@@ -18,13 +18,15 @@
             <fileNamePattern>logs/manus.log.%d{.yyyy-MM-dd}</fileNamePattern>
         </rollingPolicy>
     </appender>
+
     <appender name="CONVERSATION" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <File>logs/conversation.log</File>
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} [%.10thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/conversation.log.%d{.yyyy-MM-dd}</fileNamePattern>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/conversation.log.%d{yyyy-MM-dd}.%i</fileNamePattern>
+            <maxFileSize>2MB</maxFileSize>
         </rollingPolicy>
     </appender>
 

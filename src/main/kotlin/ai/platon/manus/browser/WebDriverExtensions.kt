@@ -27,6 +27,43 @@ class NativeWebDriver(private val driver: PulsarWebDriver) {
         }
     }
 
+    suspend fun goBack() {
+        val count = driver.browser.navigateHistory.size
+        val navigateEntry = driver.browser.navigateHistory.history.toList().getOrNull(count - 2)?.url ?: return
+        driver.navigateTo(navigateEntry)
+    }
+
+    suspend fun click(nodeId: Int) {
+        click(nodeId, 1)
+    }
+
+    suspend fun press(nodeId: Int, key: String) {
+        click(nodeId, 1)
+        keyboard.press(key, randomDelayMillis("press"))
+    }
+
+    suspend fun type(nodeId: Int, text: String) {
+        click(nodeId, 1)
+        keyboard.type(text, randomDelayMillis("type"))
+        delay(200)
+    }
+
+    suspend fun fill(nodeId: Int, text: String) {
+        val value = pageHandler.getAttribute(nodeId, "value")
+        if (value != null) {
+            // it's an input element, we should click on the right side of the element,
+            // so the cursor appears at the tail of the text
+            click(nodeId, 1, "right")
+            keyboard.delete(value.length, randomDelayMillis("delete"))
+            // ensure the input is empty
+            // page.setAttribute(nodeId, "value", "")
+        }
+
+        click(nodeId, 1)
+        // For fill, there is no delay between key presses
+        keyboard.type(text, 0)
+    }
+
     suspend fun setDocumentContent(htmlContent: String) {
         // escape htmlContent properly
         val escapedHtmlContent = htmlContent.replace("'", "\\'").replace("\"", "\\\"")
@@ -75,37 +112,6 @@ class NativeWebDriver(private val driver: PulsarWebDriver) {
 
             else -> throw ChromeDriverException("Unsupported load state: $loadState")
         }
-    }
-
-    suspend fun click(nodeId: Int) {
-        click(nodeId, 1)
-    }
-
-    suspend fun press(nodeId: Int, key: String) {
-        click(nodeId, 1)
-        keyboard.press(key, randomDelayMillis("press"))
-    }
-
-    suspend fun type(nodeId: Int, text: String) {
-        click(nodeId, 1)
-        keyboard.type(text, randomDelayMillis("type"))
-        delay(200)
-    }
-
-    suspend fun fill(nodeId: Int, text: String) {
-        val value = pageHandler.getAttribute(nodeId, "value")
-        if (value != null) {
-            // it's an input element, we should click on the right side of the element,
-            // so the cursor appears at the tail of the text
-            click(nodeId, 1, "right")
-            keyboard.delete(value.length, randomDelayMillis("delete"))
-            // ensure the input is empty
-            // page.setAttribute(nodeId, "value", "")
-        }
-
-        click(nodeId, 1)
-        // For fill, there is no delay between key presses
-        keyboard.type(text, 0)
     }
 
     private suspend fun click(nodeId: Int, count: Int, position: String = "center") {
@@ -178,6 +184,10 @@ suspend fun PulsarWebDriver.waitForLoadState(loadState: String) {
 
 suspend fun PulsarWebDriver.querySelectorAll(selector: String): List<Int> {
     return native.querySelectorAll(selector)
+}
+
+suspend fun PulsarWebDriver.goBack() {
+    native.goBack()
 }
 
 suspend fun PulsarWebDriver.click(nodeId: Int) {

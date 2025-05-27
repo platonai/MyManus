@@ -59,7 +59,6 @@ class BrowserUseTool() : AbstractTool() {
         val action = args[PARAM_ACTION] as? String? ?: return ToolExecuteResult("Action parameter is required")
         val url = args[PARAM_URL]?.toString()
         val index = AnyNumberConvertor(args[PARAM_INDEX]).toIntOrNull() ?: -1
-        val vi = AnyNumberConvertor(args[PARAM_VI]).toString()
         val text = args[PARAM_TEXT]?.toString()
         val script = args[PARAM_SCRIPT]?.toString()
         val scrollAmount = AnyNumberConvertor(args[PARAM_SCROLL_AMOUNT]).toIntOrNull()
@@ -96,7 +95,7 @@ class BrowserUseTool() : AbstractTool() {
                     }
 
                     val interactiveElements = getInteractiveElements()
-                    driver.fill(interactiveElements[index], text)
+                    driver.type(interactiveElements[index], text)
                     return ToolExecuteResult("Successfully input '$text' into element at #$index")
                 }
 
@@ -259,7 +258,24 @@ class BrowserUseTool() : AbstractTool() {
                     element["value"] = ""
                 }
             }
-            state[STATE_INTERACTIVE_ELEMENTS] = prettyPulsarObjectMapper().writeValueAsString(elementsInfo)
+
+            val visibleInteractiveElements = elementsInfo
+                .asSequence()
+                .filter { it["isVisible"] == true }
+                .filter { it["isInViewport"] == true }
+                .onEach {
+                    it["description"] = it["text"] ?: it["value"] ?: it["placeholder"] ?: it["role"] ?: ""
+                }.onEach {
+                    // remove all non-printable characters
+                    it["description"] = StringUtils.abbreviate(it["description"].toString(), 100)
+                        .replace("[^\\p{Print}]".toRegex(), " ")
+                        .replace("\\s+".toRegex(), " ")
+                }.map {
+                    // [index] type : text
+                    "[" + it["index"] + "] " + it["tagName"] + ": " + (it["description"] ?: "")
+                }
+
+            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements.joinToString("\n")
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
         }

@@ -1,8 +1,6 @@
 package ai.platon.manus.agent
 
-import ai.platon.manus.common.PLACEHOLDER_INTERACTIVE_ELEMENTS
-import ai.platon.manus.common.PLACEHOLDER_TABS
-import ai.platon.manus.common.PLACEHOLDER_URL
+import ai.platon.manus.common.*
 import ai.platon.manus.tool.ACTION_GET_HTML
 import ai.platon.manus.tool.ACTION_GET_TEXT
 
@@ -111,22 +109,6 @@ the guidelines provided.
  * ***********************************************************************/
 
 const val BROWSER_AGENT_SYSTEM_PROMPT = """
-You are an AI agent designed to automate browser tasks.
-
-# Input Format
-
-Current URL:
-{$PLACEHOLDER_URL}
-
-Open Tabs:
-{$PLACEHOLDER_TABS}
-
-Interactive Elements:
-{$PLACEHOLDER_INTERACTIVE_ELEMENTS}
-
-"""
-
-const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
 You are an AI agent designed for automating browser tasks. Your goal is to complete the final task according to the rules.
 
 ## Input Format
@@ -153,6 +135,8 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 
 ### 2. Element Interaction:
 - Only interact with elements that have an index.
+- The provided interactive elements are the only ones on the viewport that can be seen.
+- If the requested element is not among what you are looking for, try scrolling down to load more content.
 - If the requested element is not among the current interactive elements, first locate the element by its pixel position, then use `click` to interact with it.
 
 ### 3. Navigation and Error Handling:
@@ -172,6 +156,22 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 
 Take into account both the visible content and the potential content that might exist beyond the current viewport.
 Act methodically—track your progress and retain the knowledge you've acquired so far.
+
+"""
+
+const val BROWSER_AGENT_NEXT_STEP_PROMPT = """
+Current URL:
+{$PLACEHOLDER_URL}
+Open Tabs:
+{$PLACEHOLDER_TABS}
+
+Interactive Elements:
+{$PLACEHOLDER_INTERACTIVE_ELEMENTS}
+
+Content above the viewport:
+{$PLACEHOLDER_CONTENT_ABOVE}
+Content below the viewport:
+{$PLACEHOLDER_CONTENT_BELOW}
 
 """
 

@@ -36,7 +36,7 @@ abstract class FlowBase(
         data["agents"] = agents
     }
 
-    abstract fun execute(inputText: String): String
+    abstract fun execute(inputText: String): List<String>
 
     abstract val toolCallbacks: List<ToolCallback>
 }

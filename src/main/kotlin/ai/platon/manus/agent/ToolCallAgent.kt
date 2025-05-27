@@ -8,6 +8,7 @@ import ai.platon.manus.tool.Summary
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.ai.chat.client.ChatClient
 import org.springframework.ai.chat.client.DefaultChatClient
 import org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID
 import org.springframework.ai.chat.messages.Message
@@ -67,26 +68,12 @@ open class ToolCallAgent(
                 .advisors { it.param(CONVERSATION_ID, conversationId) }
                 .toolCallbacks(toolCallbacks)
 
-            if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
-//                conversationLogger.info("\n\n-------------------\nMyManus:\n{}\n{}\n{}",
-//                    request.messages.joinToString("\n"), data,
-//                    request.messages.joinToString("\n") { it.text })
-
-                val requestText = request.messages.joinToString("\n") { it.text }
-                conversationLogger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +
-                        "\nMY MANUS:\n\n{}\n\n\n", requestText)
-            }
+            reportLLMRequest(request)
 
             response = request.call().chatResponse()
 
             val thoughts = response ?: return false
             val toolCalls = thoughts.result.output.toolCalls
-
-            conversationLogger.info("AI THOUGHTS:\n\n{}\n{}", thoughts, thoughts.result)
-            conversationLogger.info("Metadata: {}", thoughts.metadata)
-            conversationLogger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
-                toolCalls.map { it.name + " " + it.arguments })
-            conversationLogger.info("-----------------")
 
             reportLLMThoughtsAndChosenToolCalls(thoughts, verbose = false)
 
@@ -101,13 +88,13 @@ open class ToolCallAgent(
         }
     }
 
-    override fun act(): String {
+    override fun act(): List<String> {
         val response0 = requireNotNull(response)
         val results: MutableList<String> = ArrayList()
         val toolCalls = response0.result.output.toolCalls
         if (toolCalls.isEmpty()) {
             logger.warn("No tool calls found in response | {} | {}", name, response0.result.output)
-            return "No tool calls found in response"
+            return listOf("No tool calls found in response")
         }
 
         val toolCall = toolCalls[0]
@@ -134,14 +121,14 @@ open class ToolCallAgent(
 
             logger.info("🔧 Tool response | {} | {}", name, StringUtils.abbreviate(responseText, 1000))
 
-            return responseText
+            return results
         } catch (e: Exception) {
             val response = ToolResponse(toolCall.id(), toolCall.name(), "Error: " + e.message)
             val responseMessage = ToolResponseMessage(listOf(response), mapOf())
             llmService.agentMemory.add(conversationId, responseMessage)
 
             logger.warn("""Act failed 😔 | {}""", e.message)
-            return String.format("""Act failed 😔 | %s""", e.message)
+            return listOf(String.format("""Act failed 😔 | %s""", e.message))
         }
     }
 
@@ -152,9 +139,34 @@ open class ToolCallAgent(
         Summary.getFunctionToolCallback(this, llmService.agentMemory, conversationId)
     )
 
+    private fun reportLLMRequest(request: ChatClient.ChatClientRequestSpec) {
+        if (request is DefaultChatClient.DefaultChatClientRequestSpec) {
+            var requestText = request.messages.joinToString("\n") { it.text }
+            requestText = requestText
+                .replace(TOOL_CALL_AGENT_SYSTEM_PROMPT, "{TOOL_CALL_AGENT_SYSTEM_PROMPT}")
+                .replace(BROWSER_AGENT_SYSTEM_PROMPT, "{BROWSER_AGENT_SYSTEM_PROMPT}")
+            conversationLogger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +
+                    "\nMY MANUS:\n\n{}\n\n\n", requestText)
+        }
+    }
+
     private fun reportLLMThoughtsAndChosenToolCalls(response: ChatResponse, verbose: Boolean) {
         val thoughts = response
         val toolCalls = thoughts.result.output.toolCalls
+
+        if (conversationLogger.isInfoEnabled) {
+            val thoughtsText = thoughts.toString()
+                .replace(TOOL_CALL_AGENT_SYSTEM_PROMPT, "{TOOL_CALL_AGENT_SYSTEM_PROMPT}")
+                .replace(BROWSER_AGENT_SYSTEM_PROMPT, "{BROWSER_AGENT_SYSTEM_PROMPT}")
+            val thoughtsResult = thoughts.result.toString()
+                .replace(TOOL_CALL_AGENT_SYSTEM_PROMPT, "{TOOL_CALL_AGENT_SYSTEM_PROMPT}")
+                .replace(BROWSER_AGENT_SYSTEM_PROMPT, "{BROWSER_AGENT_SYSTEM_PROMPT}")
+            conversationLogger.info("AI THOUGHTS:\n\n{}\n{}", thoughtsText, thoughtsResult)
+            conversationLogger.info("Metadata: {}", thoughts.metadata)
+            conversationLogger.info("🛠️ Agent has selected {} tools to use | [{}] | {}", toolCalls.size, name,
+                toolCalls.map { it.name + " " + it.arguments })
+            conversationLogger.info("-----------------")
+        }
 
         if (verbose) {
             logger.info("""😇 Agent's thoughts | {} | 🗯{}🗯""", name, thoughts.result.output)

@@ -60,35 +60,38 @@ class PlanningFlow(
         this.planId = planID
     }
 
-    override fun execute(inputText: String): String {
+    override fun execute(inputText: String): List<String> {
         if (inputText.isBlank()) {
-            return ""
+            return listOf()
         }
 
         createInitialPlan(inputText)
 
         if (!planningTool.hasPlan(planId)) {
             val message = "Failed to create a plan. Plan not found | #$planId | $inputText"
-            return message.also { logger.warn(it) }
+            logger.warn(message)
+            return listOf(message)
         }
 
         return try {
             executeStepByStep()
         } catch (e: Exception) {
             val message = "Failed to execute the planning flow | " + e.message
-            message.also { warnInterruptible(this, e, it) }
+            warnInterruptible(this, e, message)
+            listOf(message)
         } finally {
         }
     }
 
-    private fun executeStepByStep(): String {
-        val result = StringBuilder()
+    private fun executeStepByStep(): List<String> {
+        val results = mutableListOf<String>()
+
         while (true) {
             val info = currentStepInfo()
             if (info == null) {
                 if (planningTool.hasPlan(planId)) {
                     logger.info("Plan not found | {}", planId)
-                    result.append(finalizeConversation(planId))
+                    results.add(finalizeConversation(planId))
                 } else {
                     logger.info("Plan is already finished | {}", planId)
                 }
@@ -102,11 +105,11 @@ class PlanningFlow(
             val executor = chooseBestAgent(stepType)
             executor.conversationId = planId
 
-            val stepResult = executeStep(executor, stepInfo)
-            result.append(stepResult).append("\n")
+            val stepResults = executeStep(executor, stepInfo)
+            results.addAll(stepResults)
         }
 
-        return result.toString()
+        return results
     }
 
     internal fun askForAnInitialPlan(request: String): ChatResponse? {
@@ -231,7 +234,7 @@ class PlanningFlow(
         }
     }
 
-    internal fun executeStep(agent: AbstractAgent, stepInfo: Map<String, String>): String {
+    internal fun executeStep(agent: AbstractAgent, stepInfo: Map<String, String>): List<String> {
         try {
             val planStatus = currentPlanContent
             val stepText = stepInfo["text"] ?: "Step $currentStepIndex"
@@ -241,11 +244,11 @@ class PlanningFlow(
                     "planStatus" to planStatus, "currentStepIndex" to currentStepIndex, "stepText" to stepText
                 )
 
-                val stepResult = agent.run(stepData)
+                val stepResults = agent.run(stepData)
 
                 markCurrentStepCompleted()
 
-                return stepResult
+                return stepResults
             } catch (e: Exception) {
                 val message = """Failed to execute step #$currentStepIndex 🫨"""
                 if (logger.isDebugEnabled) {
@@ -253,11 +256,11 @@ class PlanningFlow(
                 } else {
                     logger.warn("$message | ${e.message}")
                 }
-                return "$message | ${e.message}"
+                return listOf("$message | ${e.message}")
             }
         } catch (e: Exception) {
             logger.warn("Error preparing execution context: " + e.message)
-            return "Error preparing execution context: " + e.message
+            return listOf("Error preparing execution context: " + e.message)
         }
     }
 
@@ -435,5 +438,4 @@ ${response?.result?.output?.text}
             return generatePlanTextFromStorage()
         }
     }
-
 }

@@ -31,10 +31,10 @@ A file system agent capable of performing read/write operations across multiple 
     override val nextStepMessage: Message
         get() = PromptTemplate(FILE_AGENT_NEXT_STEP_PROMPT).createMessage(data)
 
-    override fun act(): String {
-        val result = super.act()
-        updateFileState("file_operation", result)
-        return result
+    override fun act(): List<String> {
+        val results = super.act()
+        updateFileState("file_operation", results)
+        return results
     }
 
     override fun addThinkPromptTo(messages: MutableList<Message>): Message {
@@ -59,10 +59,10 @@ A file system agent capable of performing read/write operations across multiple 
             super.data = data
         }
 
-    private fun updateFileState(operation: String, result: String) {
+    private fun updateFileState(operation: String, results: List<String>) {
         val state: MutableMap<String, Any> = HashMap()
         state["operation"] = operation
-        state["result"] = result
+        state["result"] = results.joinToString("\n")
         currentFileState.set(state)
     }
 

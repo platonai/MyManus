@@ -47,7 +47,7 @@ class BrowserAgent(
 
     override fun addThinkPromptTo(messages: MutableList<Message>): Message {
         super.addThinkPromptTo(messages)
-        return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage(data).also { messages.add(it) }
+        return SystemPromptTemplate(BROWSER_AGENT_SYSTEM_PROMPT).createMessage().also { messages.add(it) }
     }
 
     override val toolCallbacks: List<ToolCallback> = listOf(
@@ -65,7 +65,7 @@ class BrowserAgent(
         val tabs = browserState[STATE_TABS] as? List<*>?
 
         data[PLACEHOLDER_URL] = String.format("\n   URL: %s\n   Title: %s", browserState[STATE_URL], browserState[STATE_TITLE])
-        data[PLACEHOLDER_INTERACTIVE_ELEMENTS] = (browserState[STATE_INTERACTIVE_ELEMENTS] as? String?) ?: "(No interactive elements found)"
+        data[PLACEHOLDER_INTERACTIVE_ELEMENTS] = browserState[STATE_INTERACTIVE_ELEMENTS]?.toString() ?: "(No interactive elements found)"
         data[PLACEHOLDER_RESULTS] = ""
         data[PLACEHOLDER_TABS] = (if (tabs.isNullOrEmpty()) "" else String.format("\n   %d tab(s) available", tabs.size))
 
