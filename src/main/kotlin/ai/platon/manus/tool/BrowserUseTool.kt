@@ -1,13 +1,11 @@
 package ai.platon.manus.tool
 
 import ai.platon.manus.browser.*
-import ai.platon.manus.common.AnyNumberConvertor
-import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
-import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
-import ai.platon.manus.common.JS_GET_SCROLL_INFO
+import ai.platon.manus.common.*
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.alwaysFalse
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
+import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
@@ -19,7 +17,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.function.FunctionToolCallback
-import java.awt.SystemColor.text
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
@@ -31,10 +28,11 @@ class BrowserUseTool() : AbstractTool() {
     /**
      * The ordered drivers, each driver is associated with a tab.
      * */
-    val drivers get() = driver.browser.drivers.values
-        .filterIsInstance<AbstractWebDriver>()
-        .filter { it.isActive }
-        .sortedBy { it.id }
+    val drivers
+        get() = driver.browser.drivers.values
+            .filterIsInstance<AbstractWebDriver>()
+            .filter { it.isActive }
+            .sortedBy { it.id }
 
     /**
      * The current active driver.
@@ -58,6 +56,7 @@ class BrowserUseTool() : AbstractTool() {
     private suspend fun run0(args: Map<String, Any?>): ToolExecuteResult {
         val action = args[PARAM_ACTION] as? String? ?: return ToolExecuteResult("Action parameter is required")
         val url = args[PARAM_URL]?.toString()
+        // The node index is actually is the nodeId return by CDP
         val index = AnyNumberConvertor(args[PARAM_INDEX]).toIntOrNull() ?: -1
         val text = args[PARAM_TEXT]?.toString()
         val script = args[PARAM_SCRIPT]?.toString()
@@ -73,7 +72,7 @@ class BrowserUseTool() : AbstractTool() {
 
                     driver.navigateTo(url)
                     driver.waitForLoadState("NETWORKIDLE")
-                    
+
                     return ToolExecuteResult("Navigated to $url")
                 }
 
@@ -82,8 +81,7 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("Index is required | $ACTION_CLICK")
                     }
 
-                    val interactiveElements = getInteractiveElements()
-                    driver.click(interactiveElements[index])
+                    driver.click(index)
                     driver.waitForLoadState("NETWORKIDLE")
 
                     return ToolExecuteResult("Clicked element at #$index")
@@ -94,8 +92,7 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("Index and text are required | $ACTION_INPUT_TEXT")
                     }
 
-                    val interactiveElements = getInteractiveElements()
-                    driver.type(interactiveElements[index], text)
+                    driver.type(index, text)
                     return ToolExecuteResult("Successfully input '$text' into element at #$index")
                 }
 
@@ -104,10 +101,9 @@ class BrowserUseTool() : AbstractTool() {
                         return ToolExecuteResult("Index is required | $ACTION_KEY_ENTER")
                     }
 
-                    val interactiveElements = getInteractiveElements()
-                    driver.press(interactiveElements[index], "Enter")
+                    driver.press(index, "Enter")
                     driver.waitForLoadState("NETWORKIDLE")
-                    
+
                     return ToolExecuteResult("Hit the enter key at #$index")
                 }
 
@@ -186,6 +182,7 @@ class BrowserUseTool() : AbstractTool() {
                     driver.waitForLoadState("NETWORKIDLE")
                     return ToolExecuteResult("Page refreshed")
                 }
+
                 else -> return ToolExecuteResult("Unknown action | $action")
             }
         } catch (e: Exception) {
@@ -247,38 +244,9 @@ class BrowserUseTool() : AbstractTool() {
             logger.warn("Failed to get scroll info via js | {}\n{}", currentUrl, JS_GET_SCROLL_INFO)
         }
 
-        try {
-            // Interactive elements
-            val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
-            requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
-            val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
-            elementsInfo.forEach { element ->
-                if (element["tagName"] == "textarea") {
-                    element["text"] = ""
-                    element["value"] = ""
-                }
-            }
+        state[STATE_INTERACTIVE_ELEMENTS] = getInteractiveElements(currentUrl)
 
-            val visibleInteractiveElements = elementsInfo
-                .asSequence()
-                .filter { it["isVisible"] == true }
-                .filter { it["isInViewport"] == true }
-                .onEach {
-                    it["description"] = it["text"] ?: it["value"] ?: it["placeholder"] ?: it["role"] ?: ""
-                }.onEach {
-                    // remove all non-printable characters
-                    it["description"] = StringUtils.abbreviate(it["description"].toString(), 100)
-                        .replace("[^\\p{Print}]".toRegex(), " ")
-                        .replace("\\s+".toRegex(), " ")
-                }.map {
-                    // [index] type : text
-                    "[" + it["index"] + "] " + it["tagName"] + ": " + (it["description"] ?: "")
-                }
-
-            state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements.joinToString("\n")
-        } catch (e: Exception) {
-            logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
-        }
+        highlightInteractiveElements()
 
         try {
             // Capture screenshot
@@ -295,10 +263,63 @@ class BrowserUseTool() : AbstractTool() {
                 "Clicking them will navigate to or interact with their associated content."
     }
 
-    // Add helper method for element selection
-    private suspend fun getInteractiveElements(): List<Int> {
+    /**
+     * Get interactive elements in the current page.
+     *
+     * The node IDs are used for node location because they do not change after DOM is loaded.
+     * */
+    private suspend fun getInteractiveElements(url: String): String? {
+        try {
+            // Interactive elements
+            val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
+            requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
+            val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
+            val nodeIds = getInteractiveElementsNodeId()
+            elementsInfo.forEachIndexed { i, ele ->
+                ele["index"] = nodeIds.getOrNull(i) // Add nodeId to each element info
+                // fix baidu.com's textarea issue
+                if (ele["tagName"] == "textarea") {
+                    ele["text"] = ""
+                    ele["value"] = ""
+                }
+            }
+
+            return elementsInfo.map { ElementInfo(it) }.joinToString("\n") { it.brief }
+        } catch (e: Exception) {
+            logger.warn("Failed to get elements info via js | {} |\n{}", url, JS_GET_INTERACTIVE_ELEMENTS)
+        }
+
+        return null
+    }
+
+    /**
+     * Get the node IDs of interactive elements.
+     * */
+    private suspend fun getInteractiveElementsNodeId(): List<Int> {
         val selector = BROWSER_INTERACTIVE_ELEMENTS_SELECTOR.trimIndent().trim()
         return driver.querySelectorAll(selector)
+    }
+
+    /**
+     * Highlight interactive elements in the current page.
+     * */
+    private suspend fun highlightInteractiveElements() {
+        // highlight interactive elements and return them, the return type is a map of nodeData, where the id is a
+        // document scope sequence number, e.g. 0, 1, 2, etc.
+        //     const nodeData = {
+        //      tagName: node.tagName.toLowerCase(),
+        //      attributes: {},
+        //      xpath: getXPathTree(node, true),
+        //      children: [],
+        //    };
+        try {
+            val highlightJs = ResourceLoader.readString("js/build_dom_tree.js").trimEnd { it in " \n\r;" }
+            // NOTE: The highlighted interactive elements are not actually used by MyManus,
+            // The node IDs are used for node location because they do not change after DOM is loaded.
+            driver.evaluateValue("($highlightJs)()")
+        } catch (e: Exception) {
+            logger.warn("Failed highlight interactive elements | {}", e.brief())
+        }
     }
 
     companion object {
