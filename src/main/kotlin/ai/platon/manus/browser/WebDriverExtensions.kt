@@ -1,5 +1,6 @@
 package ai.platon.manus.browser
 
+import ai.platon.manus.common.ElementInfo
 import ai.platon.pulsar.browser.driver.chrome.ClickableDOM
 import ai.platon.pulsar.browser.driver.chrome.PageHandler
 import ai.platon.pulsar.browser.driver.chrome.util.ChromeDriverException

@@ -275,8 +275,10 @@ class BrowserUseTool() : AbstractTool() {
             requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
             val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
             val nodeIds = getInteractiveElementsNodeId()
+            val attributes = nodeIds.take(10).map { kotlin.runCatching { driver.devTools.dom.getAttributes(it) }.getOrNull() }
             elementsInfo.forEachIndexed { i, ele ->
                 ele["index"] = nodeIds.getOrNull(i) // Add nodeId to each element info
+                ele["attributes"] = attributes.getOrNull(i)?.zipWithNext()?.joinToString { it.first + "=" + it.second }
                 // fix baidu.com's textarea issue
                 if (ele["tagName"] == "textarea") {
                     ele["text"] = ""
@@ -284,9 +286,11 @@ class BrowserUseTool() : AbstractTool() {
                 }
             }
 
-            return elementsInfo.map { ElementInfo(it) }.joinToString("\n") { it.brief }
+            return elementsInfo.map { ElementInfo(it) }
+                .filter { it.isVisible && it.isInViewport }
+                .joinToString("\n") { it.brief }
         } catch (e: Exception) {
-            logger.warn("Failed to get elements info via js | {} |\n{}", url, JS_GET_INTERACTIVE_ELEMENTS)
+            logger.warn("Failed to get elements info via js | {} |\n{}", url, e.message)
         }
 
         return null

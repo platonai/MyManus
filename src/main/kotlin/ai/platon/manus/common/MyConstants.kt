@@ -70,7 +70,7 @@ const val JS_GET_INTERACTIVE_ELEMENTS = """
             ),
         };
     });
-    return elementsInfo.filter(el => el.isVisible && el.isInViewport);
+    return elementsInfo
 }
 """
 
