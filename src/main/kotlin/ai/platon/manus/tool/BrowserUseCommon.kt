@@ -2,6 +2,7 @@ package ai.platon.manus.tool
 
 // Action constants
 const val ACTION_NAVIGATE = "navigate"
+const val ACTION_GO_BACK = "go_back"
 const val ACTION_CLICK = "click"
 const val ACTION_INPUT_TEXT = "input_text"
 const val ACTION_KEY_ENTER = "key_enter"
@@ -71,6 +72,7 @@ const val BROWSER_USE_TOOL_PARAMETERS = """
             "type": "string",
             "enum": [
                 "navigate",
+                "go_back",
                 "click",
                 "input_text",
                 "key_enter",

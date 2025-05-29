@@ -12,6 +12,7 @@ import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
 import ai.platon.pulsar.skeleton.PulsarSettings
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.AbstractWebDriver
 import ai.platon.pulsar.skeleton.crawl.fetch.driver.WebDriver
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
@@ -76,12 +77,22 @@ class BrowserUseTool() : AbstractTool() {
                     return ToolExecuteResult("Navigated to $url")
                 }
 
+                ACTION_GO_BACK -> {
+                    driver.goBack()
+                    driver.waitForLoadState("NETWORKIDLE")
+
+                    return ToolExecuteResult("Navigated back to previous page")
+                }
+
                 ACTION_CLICK -> {
                     if (index < 0) {
                         return ToolExecuteResult("Index is required | $ACTION_CLICK")
                     }
 
+                    debugClickableElements(index)
+
                     driver.click(index)
+                    driver.delay(3000)
                     driver.waitForLoadState("NETWORKIDLE")
 
                     return ToolExecuteResult("Clicked element at #$index")
@@ -244,9 +255,9 @@ class BrowserUseTool() : AbstractTool() {
             logger.warn("Failed to get scroll info via js | {}\n{}", currentUrl, JS_GET_SCROLL_INFO)
         }
 
-        state[STATE_INTERACTIVE_ELEMENTS] = getInteractiveElements(currentUrl)
+        state[STATE_INTERACTIVE_ELEMENTS] = getInteractiveElements().joinToString("\n") { it.brief }
 
-        highlightInteractiveElements()
+        // highlightInteractiveElements()
 
         try {
             // Capture screenshot
@@ -268,17 +279,15 @@ class BrowserUseTool() : AbstractTool() {
      *
      * The node IDs are used for node location because they do not change after DOM is loaded.
      * */
-    private suspend fun getInteractiveElements(url: String): String? {
+    private suspend fun getInteractiveElements(): List<ElementInfo> {
         try {
             // Interactive elements
             val jsResult = driver.evaluateValueDetail("($JS_GET_INTERACTIVE_ELEMENTS)()")
             requireNotNull(jsResult) { "Js result must not be null - \n$JS_GET_INTERACTIVE_ELEMENTS" }
             val elementsInfo = jsResult.value as List<MutableMap<String, Any?>>
             val nodeIds = getInteractiveElementsNodeId()
-            val attributes = nodeIds.take(10).map { kotlin.runCatching { driver.devTools.dom.getAttributes(it) }.getOrNull() }
             elementsInfo.forEachIndexed { i, ele ->
                 ele["index"] = nodeIds.getOrNull(i) // Add nodeId to each element info
-                ele["attributes"] = attributes.getOrNull(i)?.zipWithNext()?.joinToString { it.first + "=" + it.second }
                 // fix baidu.com's textarea issue
                 if (ele["tagName"] == "textarea") {
                     ele["text"] = ""
@@ -286,14 +295,15 @@ class BrowserUseTool() : AbstractTool() {
                 }
             }
 
-            return elementsInfo.map { ElementInfo(it) }
+            val visibleElements = elementsInfo.map { ElementInfo(it) }
                 .filter { it.isVisible && it.isInViewport }
-                .joinToString("\n") { it.brief }
+
+            return visibleElements
         } catch (e: Exception) {
-            logger.warn("Failed to get elements info via js | {} |\n{}", url, e.message)
+            logger.warn("Failed to get elements info via js |\n{}", e.message)
         }
 
-        return null
+        return emptyList()
     }
 
     /**
@@ -323,6 +333,20 @@ class BrowserUseTool() : AbstractTool() {
             driver.evaluateValue("($highlightJs)()")
         } catch (e: Exception) {
             logger.warn("Failed highlight interactive elements | {}", e.brief())
+        }
+    }
+
+    private fun debugClickableElements(nodeId: Int) {
+        try {
+            val dom = driver.devTools.dom
+            val attributes = dom.getAttributes(nodeId)
+            if (attributes.isNotEmpty()) {
+                println("Clicking element #$nodeId with attributes: " + attributes.joinToString(", "))
+            } else {
+                println("Clicking element #$nodeId with no attributes found | " + dom.outerHTML)
+            }
+        } catch (e: Exception) {
+            logger.warn("Failed to get attributes for element #$nodeId | {}", e.message)
         }
     }
 

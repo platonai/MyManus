@@ -12,26 +12,28 @@ data class ElementInfo(
     val name: String?,
     val id: String?,
     val ariaLabel: String?,
+    var attributes: String? = null,
     val isVisible: Boolean,
     val isInViewport: Boolean,
 ) {
     constructor(map: Map<String, Any?>) : this(
-        index = map["index"] as Int,
+        index = AnyNumberConvertor(map["index"]).toIntOrNull() ?: -1,
+        attributes = map["attributes"]?.toString()?.takeIf { it.isNotBlank() },
         vi = map["vi"] as String?,
         tagName = map["tagName"] as String,
-        type = map["type"] as String?,
-        role = map["role"] as String?,
-        text = map["text"] as String?,
-        value = map["value"] as String?,
-        placeholder = map["placeholder"] as String?,
-        name = map["name"] as String?,
-        id = map["id"] as String?,
-        ariaLabel = map["aria-label"] as String?,
+        type = map["type"]?.toString()?.takeIf { it.isNotBlank() },
+        role = map["role"]?.toString()?.takeIf { it.isNotBlank() },
+        text = map["text"]?.toString()?.takeIf { it.isNotBlank() },
+        value = map["value"]?.toString()?.takeIf { it.isNotBlank() },
+        placeholder = map["placeholder"]?.toString()?.takeIf { it.isNotBlank() },
+        name = map["name"]?.toString()?.takeIf { it.isNotBlank() },
+        id = map["id"]?.toString()?.takeIf { it.isNotBlank() },
+        ariaLabel = map["aria-label"]?.toString()?.takeIf { it.isNotBlank() },
         isVisible = map["isVisible"] as Boolean,
         isInViewport = map["isInViewport"] as Boolean
     )
 
-    val description: String get() = text ?: value ?: placeholder ?: role ?: ""
+    val description: String get() = text ?: value ?: placeholder ?: role ?: attributes ?: ""
 
-    val brief: String get() = "$index | $vi | $tagName | $description"
+    val brief: String get() = "$index | $tagName | $description | $attributes"
 }

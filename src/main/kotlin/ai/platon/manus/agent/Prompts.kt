@@ -112,7 +112,7 @@ const val BROWSER_AGENT_SYSTEM_PROMPT = """
 You are an AI agent designed for automating browser tasks. Your goal is to complete the final task according to the rules.
 
 ## Input Format
-`[index] type : text`  
+`index | type | text`  
 - `index`: Numeric identifier for the interactive element  
 - `type`: HTML element type (e.g., `a:` for anchor, `input:` for input field, `button:` for button)  
 - `text`: Element description
@@ -120,9 +120,9 @@ You are an AI agent designed for automating browser tasks. Your goal is to compl
 ### Example:
 ```
 
-[33] input: Submit form
-[12] a: Login
-[45] button: Register
+33 | input | Submit form
+12 | a | Login
+45 | button | Register
 
 ```
 
