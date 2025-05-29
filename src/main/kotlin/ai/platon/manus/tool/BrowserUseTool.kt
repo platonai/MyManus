@@ -282,9 +282,17 @@ class BrowserUseTool() : AbstractTool() {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
         }
 
+        // highlight interactive elements and return them, the return type is a map of nodeData, where the id is an
+        // document scope sequence number, e.g. 0, 1, 2, etc.
+        //     const nodeData = {
+        //      tagName: node.tagName.toLowerCase(),
+        //      attributes: {},
+        //      xpath: getXPathTree(node, true),
+        //      children: [],
+        //    };
         try {
             val domTreeBuilder = ResourceLoader.readString("js/build_dom_tree.js").trimEnd { it in " \n\r;" }
-            driver.evaluate("($domTreeBuilder)()")
+            val domMap = driver.evaluateValue("($domTreeBuilder)()")
         } catch (e: Exception) {
             logger.warn("Failed build dom tree | {}", e.brief())
         }
