@@ -283,9 +283,8 @@
       ];
       const colorIndex = index % colors.length;
       const baseColor = colors[colorIndex];
-      // const backgroundColor = baseColor + "1A"; // 10% opacity version of the color
-      // const backgroundColor = baseColor + "0D"; // 5% opacity version of the color
-      const backgroundColor = baseColor + "05"; // 2% opacity version of the color
+      // opacity version of the color: 10%: 1A, 5%: 0D, 2%: 05, 1%: 02, 0.5%: 01
+      const backgroundColor = baseColor + "01";
 
       // Get iframe offset if necessary
       let iframeOffset = { x: 0, y: 0 };
@@ -304,7 +303,7 @@
 
         const overlay = document.createElement("div");
         overlay.style.position = "fixed";
-        overlay.style.border = `2px solid ${baseColor}`;
+        overlay.style.border = `1px solid ${baseColor}`;
         overlay.style.backgroundColor = backgroundColor;
         overlay.style.pointerEvents = "none";
         overlay.style.boxSizing = "border-box";
