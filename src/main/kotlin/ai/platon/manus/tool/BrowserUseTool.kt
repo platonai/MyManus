@@ -3,11 +3,9 @@ package ai.platon.manus.tool
 import ai.platon.manus.browser.*
 import ai.platon.manus.common.*
 import ai.platon.manus.tool.support.ToolExecuteResult
-import ai.platon.pulsar.common.AppContext.state
 import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.alwaysFalse
 import ai.platon.pulsar.common.brief
-import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
 import ai.platon.pulsar.protocol.browser.impl.DefaultBrowserFactory
@@ -19,7 +17,6 @@ import org.apache.commons.lang3.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.function.FunctionToolCallback
-import java.awt.SystemColor.text
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.abs
 
@@ -31,10 +28,11 @@ class BrowserUseTool() : AbstractTool() {
     /**
      * The ordered drivers, each driver is associated with a tab.
      * */
-    val drivers get() = driver.browser.drivers.values
-        .filterIsInstance<AbstractWebDriver>()
-        .filter { it.isActive }
-        .sortedBy { it.id }
+    val drivers
+        get() = driver.browser.drivers.values
+            .filterIsInstance<AbstractWebDriver>()
+            .filter { it.isActive }
+            .sortedBy { it.id }
 
     /**
      * The current active driver.
@@ -74,7 +72,7 @@ class BrowserUseTool() : AbstractTool() {
 
                     driver.navigateTo(url)
                     driver.waitForLoadState("NETWORKIDLE")
-                    
+
                     return ToolExecuteResult("Navigated to $url")
                 }
 
@@ -184,6 +182,7 @@ class BrowserUseTool() : AbstractTool() {
                     driver.waitForLoadState("NETWORKIDLE")
                     return ToolExecuteResult("Page refreshed")
                 }
+
                 else -> return ToolExecuteResult("Unknown action | $action")
             }
         } catch (e: Exception) {
@@ -264,7 +263,11 @@ class BrowserUseTool() : AbstractTool() {
                 "Clicking them will navigate to or interact with their associated content."
     }
 
-    // Add helper method for element selection
+    /**
+     * Get interactive elements in the current page.
+     *
+     * The node IDs are used for node location because they do not change after DOM is loaded.
+     * */
     private suspend fun getInteractiveElements(url: String): String? {
         try {
             // Interactive elements
@@ -310,9 +313,10 @@ class BrowserUseTool() : AbstractTool() {
         //      children: [],
         //    };
         try {
-            val domTreeBuilder = ResourceLoader.readString("js/build_dom_tree.js").trimEnd { it in " \n\r;" }
-            // TODO: The highlighted interactive elements are not actually used by MyManus
-            val domMap = driver.evaluateValue("($domTreeBuilder)()")
+            val highlightJs = ResourceLoader.readString("js/build_dom_tree.js").trimEnd { it in " \n\r;" }
+            // NOTE: The highlighted interactive elements are not actually used by MyManus,
+            // The node IDs are used for node location because they do not change after DOM is loaded.
+            driver.evaluateValue("($highlightJs)()")
         } catch (e: Exception) {
             logger.warn("Failed highlight interactive elements | {}", e.brief())
         }
