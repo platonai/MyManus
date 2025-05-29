@@ -6,7 +6,9 @@ import ai.platon.manus.common.BROWSER_INTERACTIVE_ELEMENTS_SELECTOR
 import ai.platon.manus.common.JS_GET_INTERACTIVE_ELEMENTS
 import ai.platon.manus.common.JS_GET_SCROLL_INFO
 import ai.platon.manus.tool.support.ToolExecuteResult
+import ai.platon.pulsar.common.ResourceLoader
 import ai.platon.pulsar.common.alwaysFalse
+import ai.platon.pulsar.common.brief
 import ai.platon.pulsar.common.serialize.json.prettyPulsarObjectMapper
 import ai.platon.pulsar.common.urls.URLUtils
 import ai.platon.pulsar.protocol.browser.driver.cdt.PulsarWebDriver
@@ -278,6 +280,13 @@ class BrowserUseTool() : AbstractTool() {
             state[STATE_INTERACTIVE_ELEMENTS] = visibleInteractiveElements.joinToString("\n")
         } catch (e: Exception) {
             logger.warn("Failed to get elements info via js | {} |\n{}", currentUrl, JS_GET_INTERACTIVE_ELEMENTS)
+        }
+
+        try {
+            val domTreeBuilder = ResourceLoader.readString("js/build_dom_tree.js").trimEnd { it in " \n\r;" }
+            driver.evaluate("($domTreeBuilder)()")
+        } catch (e: Exception) {
+            logger.warn("Failed build dom tree | {}", e.brief())
         }
 
         try {
